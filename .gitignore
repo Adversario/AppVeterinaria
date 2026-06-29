@@ -1,0 +1,38 @@
+# Gradle / Android
+.gradle/
+build/
+**/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Kotlin / Java build outputs
+*.class
+*.jar
+*.war
+*.ear
+
+# Android binary outputs
+*.apk
+*.aab
+app/release/
+app/debug/
+
+# Logs and crash dumps
+*.log
+hs_err_pid*
+replay_pid*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
