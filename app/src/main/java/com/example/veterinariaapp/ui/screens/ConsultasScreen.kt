@@ -224,6 +224,11 @@ private fun CreateConsultaDialog(
     var tratamiento by remember { mutableStateOf("") }
     var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var mascotaError by remember { mutableStateOf(false) }
+    var motivoError by remember { mutableStateOf(false) }
+    var diagnosticoError by remember { mutableStateOf(false) }
+    var tratamientoError by remember { mutableStateOf(false) }
+    var dateError by remember { mutableStateOf(false) }
 
     val selectedDate = selectedDateMillis?.let { formatConsultationDate(it) }.orEmpty()
 
@@ -233,6 +238,7 @@ private fun CreateConsultaDialog(
             onDismiss = { showDatePicker = false },
             onConfirm = {
                 selectedDateMillis = it
+                dateError = false
                 showDatePicker = false
             }
         )
@@ -252,7 +258,13 @@ private fun CreateConsultaDialog(
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Mascota") },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        isError = mascotaError,
+                        supportingText = {
+                            if (mascotaError) {
+                                Text("Selecciona una mascota", color = MaterialTheme.colorScheme.error)
+                            }
+                        }
                     )
                     ExposedDropdownMenu(
                         expanded = mascotaMenuExpanded,
@@ -263,6 +275,7 @@ private fun CreateConsultaDialog(
                                 text = { Text("${mascota.nombre} - ${mascota.especie}") },
                                 onClick = {
                                     selectedMascota = mascota
+                                    mascotaError = false
                                     mascotaMenuExpanded = false
                                 }
                             )
@@ -271,13 +284,29 @@ private fun CreateConsultaDialog(
                 }
                 ConsultaFields(
                     motivo = motivo,
-                    onMotivoChange = { motivo = it },
+                    onMotivoChange = {
+                        motivo = it
+                        motivoError = false
+                    },
+                    motivoError = motivoError,
                     selectedDate = selectedDate,
-                    onDateClick = { showDatePicker = true },
+                    onDateClick = {
+                        showDatePicker = true
+                        dateError = false
+                    },
+                    dateError = dateError,
                     diagnostico = diagnostico,
-                    onDiagnosticoChange = { diagnostico = it },
+                    onDiagnosticoChange = {
+                        diagnostico = it
+                        diagnosticoError = false
+                    },
+                    diagnosticoError = diagnosticoError,
                     tratamiento = tratamiento,
-                    onTratamientoChange = { tratamiento = it }
+                    onTratamientoChange = {
+                        tratamiento = it
+                        tratamientoError = false
+                    },
+                    tratamientoError = tratamientoError
                 )
             }
         },
@@ -285,7 +314,13 @@ private fun CreateConsultaDialog(
             TextButton(
                 onClick = {
                     val mascotaId = selectedMascota?.id
-                    if (mascotaId != null && motivo.isNotBlank() && selectedDate.isNotBlank() && diagnostico.isNotBlank() && tratamiento.isNotBlank()) {
+                    mascotaError = mascotaId == null
+                    motivoError = motivo.isBlank()
+                    dateError = selectedDate.isBlank()
+                    diagnosticoError = diagnostico.isBlank()
+                    tratamientoError = tratamiento.isBlank()
+
+                    if (!mascotaError && !motivoError && !dateError && !diagnosticoError && !tratamientoError && mascotaId != null) {
                         onConfirm(mascotaId, motivo.trim(), selectedDate, diagnostico.trim(), tratamiento.trim())
                     }
                 }
@@ -307,6 +342,10 @@ private fun EditConsultaDialog(
     var tratamiento by remember(consulta.id) { mutableStateOf(consulta.tratamiento) }
     var selectedDateMillis by remember(consulta.id) { mutableStateOf(parseConsultationDate(consulta.fecha)) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var motivoError by remember(consulta.id) { mutableStateOf(false) }
+    var diagnosticoError by remember(consulta.id) { mutableStateOf(false) }
+    var tratamientoError by remember(consulta.id) { mutableStateOf(false) }
+    var dateError by remember(consulta.id) { mutableStateOf(false) }
 
     val selectedDate = selectedDateMillis?.let { formatConsultationDate(it) } ?: consulta.fecha
 
@@ -316,6 +355,7 @@ private fun EditConsultaDialog(
             onDismiss = { showDatePicker = false },
             onConfirm = {
                 selectedDateMillis = it
+                dateError = false
                 showDatePicker = false
             }
         )
@@ -327,19 +367,40 @@ private fun EditConsultaDialog(
         text = {
             ConsultaFields(
                 motivo = motivo,
-                onMotivoChange = { motivo = it },
+                onMotivoChange = {
+                    motivo = it
+                    motivoError = false
+                },
+                motivoError = motivoError,
                 selectedDate = selectedDate,
-                onDateClick = { showDatePicker = true },
+                onDateClick = {
+                    showDatePicker = true
+                    dateError = false
+                },
+                dateError = dateError,
                 diagnostico = diagnostico,
-                onDiagnosticoChange = { diagnostico = it },
+                onDiagnosticoChange = {
+                    diagnostico = it
+                    diagnosticoError = false
+                },
+                diagnosticoError = diagnosticoError,
                 tratamiento = tratamiento,
-                onTratamientoChange = { tratamiento = it }
+                onTratamientoChange = {
+                    tratamiento = it
+                    tratamientoError = false
+                },
+                tratamientoError = tratamientoError
             )
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (motivo.isNotBlank() && selectedDate.isNotBlank() && diagnostico.isNotBlank() && tratamiento.isNotBlank()) {
+                    motivoError = motivo.isBlank()
+                    dateError = selectedDate.isBlank()
+                    diagnosticoError = diagnostico.isBlank()
+                    tratamientoError = tratamiento.isBlank()
+
+                    if (!motivoError && !dateError && !diagnosticoError && !tratamientoError) {
                         onConfirm(motivo.trim(), selectedDate, diagnostico.trim(), tratamiento.trim())
                     }
                 }
@@ -353,22 +414,43 @@ private fun EditConsultaDialog(
 private fun ConsultaFields(
     motivo: String,
     onMotivoChange: (String) -> Unit,
+    motivoError: Boolean,
     selectedDate: String,
     onDateClick: () -> Unit,
+    dateError: Boolean,
     diagnostico: String,
     onDiagnosticoChange: (String) -> Unit,
+    diagnosticoError: Boolean,
     tratamiento: String,
-    onTratamientoChange: (String) -> Unit
+    onTratamientoChange: (String) -> Unit,
+    tratamientoError: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedTextField(motivo, onMotivoChange, label = { Text("Motivo") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            value = motivo,
+            onValueChange = onMotivoChange,
+            label = { Text("Motivo") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = motivoError,
+            supportingText = {
+                if (motivoError) {
+                    Text("Este campo es obligatorio", color = MaterialTheme.colorScheme.error)
+                }
+            }
+        )
         OutlinedTextField(
             value = diagnostico,
             onValueChange = onDiagnosticoChange,
             label = { Text("Diagnostico") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = false,
-            maxLines = 5
+            maxLines = 5,
+            isError = diagnosticoError,
+            supportingText = {
+                if (diagnosticoError) {
+                    Text("Este campo es obligatorio", color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
         OutlinedTextField(
             value = tratamiento,
@@ -376,11 +458,20 @@ private fun ConsultaFields(
             label = { Text("Tratamiento") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = false,
-            maxLines = 5
+            maxLines = 5,
+            isError = tratamientoError,
+            supportingText = {
+                if (tratamientoError) {
+                    Text("Este campo es obligatorio", color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
         Button(onClick = onDateClick, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Filled.Event, contentDescription = null)
             Text(selectedDate.ifBlank { "Seleccionar fecha" }, modifier = Modifier.padding(start = 8.dp))
+        }
+        if (dateError) {
+            Text("Selecciona una fecha", color = MaterialTheme.colorScheme.error)
         }
     }
 }

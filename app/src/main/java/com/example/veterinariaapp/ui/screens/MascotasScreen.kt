@@ -270,6 +270,11 @@ private fun CreateMascotaDialog(
     var especie by remember { mutableStateOf("") }
     var raza by remember { mutableStateOf("") }
     var edadTxt by remember { mutableStateOf("") }
+    var duenoError by remember { mutableStateOf(false) }
+    var nombreError by remember { mutableStateOf(false) }
+    var especieError by remember { mutableStateOf(false) }
+    var razaError by remember { mutableStateOf(false) }
+    var edadError by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -282,7 +287,13 @@ private fun CreateMascotaDialog(
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Dueno") },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        isError = duenoError,
+                        supportingText = {
+                            if (duenoError) {
+                                Text("Selecciona un dueno", color = MaterialTheme.colorScheme.error)
+                            }
+                        }
                     )
                     ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         duenos.forEach { dueno ->
@@ -290,6 +301,7 @@ private fun CreateMascotaDialog(
                                 text = { Text(dueno.nombre) },
                                 onClick = {
                                     selectedDueno = dueno
+                                    duenoError = false
                                     expanded = false
                                 }
                             )
@@ -298,13 +310,29 @@ private fun CreateMascotaDialog(
                 }
                 MascotaFields(
                     nombre = nombre,
-                    onNombreChange = { nombre = it },
+                    onNombreChange = {
+                        nombre = it
+                        nombreError = false
+                    },
+                    nombreError = nombreError,
                     especie = especie,
-                    onEspecieChange = { especie = it },
+                    onEspecieChange = {
+                        especie = it
+                        especieError = false
+                    },
+                    especieError = especieError,
                     raza = raza,
-                    onRazaChange = { raza = it },
+                    onRazaChange = {
+                        raza = it
+                        razaError = false
+                    },
+                    razaError = razaError,
                     edadTxt = edadTxt,
-                    onEdadChange = { edadTxt = it }
+                    onEdadChange = {
+                        edadTxt = it
+                        edadError = false
+                    },
+                    edadError = edadError
                 )
             }
         },
@@ -313,7 +341,13 @@ private fun CreateMascotaDialog(
                 onClick = {
                     val duenoId = selectedDueno?.id
                     val edad = edadTxt.toIntOrNull()
-                    if (duenoId != null && nombre.isNotBlank() && especie.isNotBlank() && raza.isNotBlank() && edad != null && edad >= 0) {
+                    duenoError = duenoId == null
+                    nombreError = nombre.isBlank()
+                    especieError = especie.isBlank()
+                    razaError = raza.isBlank()
+                    edadError = edad == null || edad <= 0
+
+                    if (!duenoError && !nombreError && !especieError && !razaError && !edadError && duenoId != null && edad != null) {
                         onConfirm(duenoId, nombre.trim(), especie.trim(), raza.trim(), edad)
                     }
                 }
@@ -333,6 +367,10 @@ private fun EditMascotaDialog(
     var especie by remember(mascota.id) { mutableStateOf(mascota.especie) }
     var raza by remember(mascota.id) { mutableStateOf(mascota.raza) }
     var edadTxt by remember(mascota.id) { mutableStateOf(mascota.edad.toString()) }
+    var nombreError by remember(mascota.id) { mutableStateOf(false) }
+    var especieError by remember(mascota.id) { mutableStateOf(false) }
+    var razaError by remember(mascota.id) { mutableStateOf(false) }
+    var edadError by remember(mascota.id) { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -340,20 +378,41 @@ private fun EditMascotaDialog(
         text = {
             MascotaFields(
                 nombre = nombre,
-                onNombreChange = { nombre = it },
+                onNombreChange = {
+                    nombre = it
+                    nombreError = false
+                },
+                nombreError = nombreError,
                 especie = especie,
-                onEspecieChange = { especie = it },
+                onEspecieChange = {
+                    especie = it
+                    especieError = false
+                },
+                especieError = especieError,
                 raza = raza,
-                onRazaChange = { raza = it },
+                onRazaChange = {
+                    raza = it
+                    razaError = false
+                },
+                razaError = razaError,
                 edadTxt = edadTxt,
-                onEdadChange = { edadTxt = it }
+                onEdadChange = {
+                    edadTxt = it
+                    edadError = false
+                },
+                edadError = edadError
             )
         },
         confirmButton = {
             TextButton(
                 onClick = {
                     val edad = edadTxt.toIntOrNull()
-                    if (nombre.isNotBlank() && especie.isNotBlank() && raza.isNotBlank() && edad != null) {
+                    nombreError = nombre.isBlank()
+                    especieError = especie.isBlank()
+                    razaError = raza.isBlank()
+                    edadError = edad == null || edad <= 0
+
+                    if (!nombreError && !especieError && !razaError && !edadError && edad != null) {
                         onConfirm(nombre.trim(), especie.trim(), raza.trim(), edad)
                     }
                 }
@@ -367,24 +426,67 @@ private fun EditMascotaDialog(
 private fun MascotaFields(
     nombre: String,
     onNombreChange: (String) -> Unit,
+    nombreError: Boolean,
     especie: String,
     onEspecieChange: (String) -> Unit,
+    especieError: Boolean,
     raza: String,
     onRazaChange: (String) -> Unit,
+    razaError: Boolean,
     edadTxt: String,
-    onEdadChange: (String) -> Unit
+    onEdadChange: (String) -> Unit,
+    edadError: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedTextField(nombre, onNombreChange, label = { Text("Nombre de la mascota") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(especie, onEspecieChange, label = { Text("Especie") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(raza, onRazaChange, label = { Text("Raza") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            value = nombre,
+            onValueChange = onNombreChange,
+            label = { Text("Nombre de la mascota") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = nombreError,
+            supportingText = {
+                if (nombreError) {
+                    Text("Este campo es obligatorio", color = MaterialTheme.colorScheme.error)
+                }
+            }
+        )
+        OutlinedTextField(
+            value = especie,
+            onValueChange = onEspecieChange,
+            label = { Text("Especie") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = especieError,
+            supportingText = {
+                if (especieError) {
+                    Text("Este campo es obligatorio", color = MaterialTheme.colorScheme.error)
+                }
+            }
+        )
+        OutlinedTextField(
+            value = raza,
+            onValueChange = onRazaChange,
+            label = { Text("Raza") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = razaError,
+            supportingText = {
+                if (razaError) {
+                    Text("Este campo es obligatorio", color = MaterialTheme.colorScheme.error)
+                }
+            }
+        )
         OutlinedTextField(
             value = edadTxt,
             onValueChange = { onEdadChange(it.filter { char -> char.isDigit() }) },
             label = { Text("Edad") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            isError = edadError,
+            supportingText = {
+                if (edadError) {
+                    Text("Ingresa una edad mayor que 0", color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
     }
 }

@@ -157,6 +157,9 @@ private fun CreateDuenoDialog(
     var nombre by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var nombreError by remember { mutableStateOf(false) }
+    var telefonoError by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -164,17 +167,34 @@ private fun CreateDuenoDialog(
         text = {
             DuenoFields(
                 nombre = nombre,
-                onNombreChange = { nombre = it },
+                onNombreChange = {
+                    nombre = it
+                    nombreError = false
+                },
+                nombreError = nombreError,
                 telefono = telefono,
-                onTelefonoChange = { telefono = it },
+                onTelefonoChange = {
+                    telefono = it
+                    telefonoError = false
+                },
+                telefonoError = telefonoError,
                 email = email,
-                onEmailChange = { email = it }
+                onEmailChange = {
+                    email = it
+                    emailError = false
+                },
+                emailError = emailError
             )
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (nombre.isNotBlank() && telefono.isNotBlank()) {
+                    val cleanEmail = email.trim()
+                    nombreError = nombre.isBlank()
+                    telefonoError = telefono.isBlank()
+                    emailError = cleanEmail.isNotBlank() && !isValidOwnerEmail(cleanEmail)
+
+                    if (!nombreError && !telefonoError && !emailError) {
                         onConfirm(nombre.trim(), telefono.trim(), email.trim().ifBlank { null })
                     }
                 }
@@ -193,6 +213,9 @@ private fun EditDuenoDialog(
     var nombre by remember(dueno.id) { mutableStateOf(dueno.nombre) }
     var telefono by remember(dueno.id) { mutableStateOf(dueno.telefono) }
     var email by remember(dueno.id) { mutableStateOf(dueno.email.orEmpty()) }
+    var nombreError by remember(dueno.id) { mutableStateOf(false) }
+    var telefonoError by remember(dueno.id) { mutableStateOf(false) }
+    var emailError by remember(dueno.id) { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -200,17 +223,34 @@ private fun EditDuenoDialog(
         text = {
             DuenoFields(
                 nombre = nombre,
-                onNombreChange = { nombre = it },
+                onNombreChange = {
+                    nombre = it
+                    nombreError = false
+                },
+                nombreError = nombreError,
                 telefono = telefono,
-                onTelefonoChange = { telefono = it },
+                onTelefonoChange = {
+                    telefono = it
+                    telefonoError = false
+                },
+                telefonoError = telefonoError,
                 email = email,
-                onEmailChange = { email = it }
+                onEmailChange = {
+                    email = it
+                    emailError = false
+                },
+                emailError = emailError
             )
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (nombre.isNotBlank() && telefono.isNotBlank()) {
+                    val cleanEmail = email.trim()
+                    nombreError = nombre.isBlank()
+                    telefonoError = telefono.isBlank()
+                    emailError = cleanEmail.isNotBlank() && !isValidOwnerEmail(cleanEmail)
+
+                    if (!nombreError && !telefonoError && !emailError) {
                         onConfirm(nombre.trim(), telefono.trim(), email.trim().ifBlank { null })
                     }
                 }
@@ -224,31 +264,55 @@ private fun EditDuenoDialog(
 private fun DuenoFields(
     nombre: String,
     onNombreChange: (String) -> Unit,
+    nombreError: Boolean,
     telefono: String,
     onTelefonoChange: (String) -> Unit,
+    telefonoError: Boolean,
     email: String,
-    onEmailChange: (String) -> Unit
+    onEmailChange: (String) -> Unit,
+    emailError: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(
             value = nombre,
             onValueChange = onNombreChange,
             label = { Text("Nombre") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = nombreError,
+            supportingText = {
+                if (nombreError) {
+                    Text("Este campo es obligatorio", color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
         OutlinedTextField(
             value = telefono,
             onValueChange = onTelefonoChange,
             label = { Text("Telefono") },
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            isError = telefonoError,
+            supportingText = {
+                if (telefonoError) {
+                    Text("Este campo es obligatorio", color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
         OutlinedTextField(
             value = email,
             onValueChange = { onEmailChange(it.filter { char -> !char.isWhitespace() }) },
             label = { Text("Correo Electronico") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            isError = emailError,
+            supportingText = {
+                if (emailError) {
+                    Text("Formato de correo invalido", color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
     }
 }
+
+private fun isValidOwnerEmail(value: String): Boolean =
+    Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.(cl|com)$", RegexOption.IGNORE_CASE).matches(value)

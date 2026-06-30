@@ -123,6 +123,10 @@ private fun CreateAppointmentDialog(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var petMenuExpanded by remember { mutableStateOf(false) }
+    var petError by remember { mutableStateOf(false) }
+    var motivoError by remember { mutableStateOf(false) }
+    var dateError by remember { mutableStateOf(false) }
+    var timeError by remember { mutableStateOf(false) }
 
     val todayStartMillis = remember { startOfTodayMillis() }
     val selectedDateLabel = selectedDateMillis?.let { formatDateLabel(it) } ?: "Seleccionar fecha"
@@ -146,6 +150,7 @@ private fun CreateAppointmentDialog(
                 TextButton(
                     onClick = {
                         selectedDateMillis = datePickerState.selectedDateMillis
+                        dateError = false
                         showDatePicker = false
                     },
                     enabled = datePickerState.selectedDateMillis != null
@@ -171,6 +176,7 @@ private fun CreateAppointmentDialog(
                     onClick = {
                         selectedHour = timePickerState.hour
                         selectedMinute = timePickerState.minute
+                        timeError = false
                         showTimePicker = false
                     }
                 ) { Text("Aceptar") }
@@ -195,7 +201,13 @@ private fun CreateAppointmentDialog(
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Mascota") },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        isError = petError,
+                        supportingText = {
+                            if (petError) {
+                                Text("Selecciona una mascota", color = MaterialTheme.colorScheme.error)
+                            }
+                        }
                     )
                     ExposedDropdownMenu(expanded = petMenuExpanded, onDismissRequest = { petMenuExpanded = false }) {
                         mascotas.forEach { pet ->
@@ -203,6 +215,7 @@ private fun CreateAppointmentDialog(
                                 text = { Text("${pet.nombre} - ${pet.especie}") },
                                 onClick = {
                                     selectedPet = pet
+                                    petError = false
                                     petMenuExpanded = false
                                 }
                             )
@@ -211,28 +224,55 @@ private fun CreateAppointmentDialog(
                 }
                 OutlinedTextField(
                     value = motivo,
-                    onValueChange = { motivo = it },
+                    onValueChange = {
+                        motivo = it
+                        motivoError = false
+                    },
                     label = { Text("Motivo de la cita") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    isError = motivoError,
+                    supportingText = {
+                        if (motivoError) {
+                            Text("Este campo es obligatorio", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 )
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Button(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
+                    Button(
+                        onClick = {
+                            showDatePicker = true
+                            dateError = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Icon(Icons.Filled.Event, contentDescription = null)
                         Text(
-                            if (selectedDateMillis == null) "Fecha" else selectedDateLabel,
+                            if (selectedDateMillis == null) "Seleccionar Fecha" else selectedDateLabel,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
-                    Button(onClick = { showTimePicker = true }, modifier = Modifier.fillMaxWidth()) {
+                    if (dateError) {
+                        Text("Selecciona una fecha", color = MaterialTheme.colorScheme.error)
+                    }
+                    Button(
+                        onClick = {
+                            showTimePicker = true
+                            timeError = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Icon(Icons.Filled.Schedule, contentDescription = null)
                         Text(
-                            if (selectedHour == null || selectedMinute == null) "Hora" else selectedTimeLabel,
+                            if (selectedHour == null || selectedMinute == null) "Seleccionar Hora" else selectedTimeLabel,
                             modifier = Modifier.padding(start = 8.dp)
                         )
+                    }
+                    if (timeError) {
+                        Text("Selecciona una hora", color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -244,7 +284,12 @@ private fun CreateAppointmentDialog(
                     val dateMillis = selectedDateMillis
                     val hour = selectedHour
                     val minute = selectedMinute
-                    if (pet != null && motivo.isNotBlank() && dateMillis != null && hour != null && minute != null) {
+                    petError = pet == null
+                    motivoError = motivo.isBlank()
+                    dateError = dateMillis == null
+                    timeError = hour == null || minute == null
+
+                    if (!petError && !motivoError && !dateError && !timeError && pet != null && dateMillis != null && hour != null && minute != null) {
                         onConfirm(pet.id, formatIsoDateTime(dateMillis, hour, minute), motivo.trim())
                     }
                 },
