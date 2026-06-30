@@ -55,7 +55,7 @@ fun MascotasScreen(
     var edadTxt by remember { mutableStateOf("") }
 
     var filtroEspecie by remember { mutableStateOf("Todas") }
-    var orden by remember { mutableStateOf("ID") }
+    var orden by remember { mutableStateOf("Nombre") }
     var msg by remember { mutableStateOf<String?>(null) }
 
     val visibles = remember(mascotas, filtroEspecie, orden, isOwner, ownerId) {
@@ -67,7 +67,7 @@ fun MascotasScreen(
                 when (orden) {
                     "Nombre" -> seq.sortedBy { it.nombre.lowercase() }
                     "Especie" -> seq.sortedBy { it.especie.lowercase() }
-                    else -> seq.sortedBy { it.id }
+                    else -> seq.sortedBy { it.nombre.lowercase() }
                 }
             }
             .toList()
@@ -110,7 +110,7 @@ fun MascotasScreen(
                             ) {
                                 duenos.forEach { dueno ->
                                     DropdownMenuItem(
-                                        text = { Text("${dueno.nombre} - ID ${dueno.id}") },
+                                        text = { Text(dueno.nombre) },
                                         onClick = {
                                             selectedDueno = dueno
                                             duenoMenuExpanded = false
@@ -201,7 +201,7 @@ fun MascotasScreen(
                                 modifier = Modifier.menuAnchor().fillMaxWidth()
                             )
                             ExposedDropdownMenu(expanded = exp2, onDismissRequest = { exp2 = false }) {
-                                listOf("ID", "Nombre", "Especie").forEach { option ->
+                                listOf("Nombre", "Especie").forEach { option ->
                                     DropdownMenuItem(
                                         text = { Text(option) },
                                         onClick = {
@@ -222,7 +222,9 @@ fun MascotasScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(pet.nombre, style = MaterialTheme.typography.titleMedium)
                     Text("Especie: ${pet.especie} - Raza: ${pet.raza} - Edad: ${pet.edad}")
-                    Text("Dueno ID: ${pet.duenoId} - ID: ${pet.id}")
+                    duenos.firstOrNull { it.id == pet.duenoId }?.let { dueno ->
+                        Text("Dueno: ${dueno.nombre}")
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedButton(onClick = { vetVm.eliminarMascota(pet.id) }) { Text("Eliminar") }
                     }

@@ -1,12 +1,19 @@
 package com.example.veterinariaapp.viewmodel
 
 import android.app.Application
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.example.veterinaria.data.Repository
-import com.example.veterinaria.data.model.*
+import com.example.veterinaria.data.model.ActivityEvent
+import com.example.veterinaria.data.model.Cita
+import com.example.veterinaria.data.model.Consulta
+import com.example.veterinaria.data.model.Dueno
+import com.example.veterinaria.data.model.Mascota
 import com.example.veterinariaapp.platform.ReminderWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -104,7 +111,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
     fun agregarDueno(nombre: String, telefono: String) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.addDueno(nombre, telefono)
-            Repository.logCrud("Crear dueño: $nombre")
+            Repository.logCrud("Crear dueno: $nombre")
             cargarResumenConProgreso()
         }
     }
@@ -112,7 +119,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
     fun agregarMascota(duenoId: String, nombre: String, especie: String, raza: String, edad: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.addMascota(duenoId, nombre, especie, raza, edad)
-            Repository.logCrud("Crear mascota: $nombre (dueñoId=$duenoId)")
+            Repository.logCrud("Crear mascota: $nombre")
             cargarResumenConProgreso()
         }
     }
@@ -120,23 +127,29 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
     fun eliminarMascota(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.deleteMascota(id)
-            Repository.logCrud("Eliminar mascota id=$id")
+            Repository.logCrud("Eliminar mascota")
             cargarResumenConProgreso()
         }
     }
 
-    fun agregarConsulta(mascotaId: String, motivo: String, fecha: String, diagnostico: String, tratamiento: String) {
+    fun agregarConsulta(
+        mascotaId: String,
+        motivo: String,
+        fecha: String,
+        diagnostico: String,
+        tratamiento: String
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.addConsulta(mascotaId, motivo, fecha, diagnostico, tratamiento)
-            Repository.logCrud("Crear consulta mascotaId=$mascotaId ($fecha)")
+            Repository.logCrud("Crear consulta: $motivo ($fecha)")
             cargarResumenConProgreso()
         }
     }
 
-    fun editarConsulta(id: String, motivo: String, fecha: String) {
+    fun editarConsulta(id: String, motivo: String, fecha: String, diagnostico: String, tratamiento: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            Repository.updateConsulta(id, motivo, fecha)
-            Repository.logCrud("Editar consulta id=$id")
+            Repository.updateConsulta(id, motivo, fecha, diagnostico, tratamiento)
+            Repository.logCrud("Editar consulta: $motivo")
             cargarResumenConProgreso()
         }
     }
@@ -144,7 +157,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
     fun eliminarConsulta(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.deleteConsulta(id)
-            Repository.logCrud("Eliminar consulta id=$id")
+            Repository.logCrud("Eliminar consulta")
             cargarResumenConProgreso()
         }
     }
@@ -152,9 +165,8 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
     fun agendarCita(mascotaId: String, fecha: String, nota: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val cita = Repository.addCita(mascotaId, fecha, nota)
-            Repository.logCrud("Agendar cita id=${cita.id} mascotaId=$mascotaId ($fecha)")
+            Repository.logCrud("Agendar cita: $nota ($fecha)")
 
-            // Notificación automática (demo): se dispara en 10s
             programarNotificacionDemo(cita)
 
             cargarResumenConProgreso()
@@ -164,7 +176,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
     fun eliminarCita(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.deleteCita(id)
-            Repository.logCrud("Eliminar cita id=$id")
+            Repository.logCrud("Eliminar cita")
             cargarResumenConProgreso()
         }
     }
@@ -173,7 +185,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
         val ctx = getApplication<Application>()
         val data = workDataOf(
             "title" to "Recordatorio de cita",
-            "message" to "Cita próxima (${cita.fecha}) • Mascota ID ${cita.mascotaId}"
+            "message" to "Cita proxima (${cita.fecha})"
         )
         val req = OneTimeWorkRequestBuilder<ReminderWorker>()
             .setInitialDelay(10, TimeUnit.SECONDS)
@@ -181,6 +193,6 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
             .build()
 
         WorkManager.getInstance(ctx).enqueue(req)
-        Repository.logNotif("Programada notificación (demo) para cita id=${cita.id}")
+        Repository.logNotif("Programada notificacion demo para cita")
     }
 }

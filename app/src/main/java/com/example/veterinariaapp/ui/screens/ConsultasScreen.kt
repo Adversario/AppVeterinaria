@@ -71,6 +71,8 @@ fun ConsultasScreen(
     var selectedMascota by remember { mutableStateOf<Mascota?>(null) }
     var mascotaMenuExpanded by remember { mutableStateOf(false) }
     var motivo by remember { mutableStateOf("") }
+    var diagnostico by remember { mutableStateOf("") }
+    var tratamiento by remember { mutableStateOf("") }
     var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -167,6 +169,24 @@ fun ConsultasScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    OutlinedTextField(
+                        value = diagnostico,
+                        onValueChange = { diagnostico = it },
+                        label = { Text("Diagnostico") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = false,
+                        maxLines = 5
+                    )
+
+                    OutlinedTextField(
+                        value = tratamiento,
+                        onValueChange = { tratamiento = it },
+                        label = { Text("Tratamiento") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = false,
+                        maxLines = 5
+                    )
+
                     Button(
                         onClick = { showDatePicker = true },
                         modifier = Modifier.fillMaxWidth()
@@ -186,8 +206,8 @@ fun ConsultasScreen(
                                 msg = "Selecciona una mascota."
                                 return@Button
                             }
-                            if (motivo.isBlank() || selectedDate.isBlank()) {
-                                msg = "Completa motivo y fecha."
+                            if (motivo.isBlank() || selectedDate.isBlank() || diagnostico.isBlank() || tratamiento.isBlank()) {
+                                msg = "Completa motivo, fecha, diagnostico y tratamiento."
                                 return@Button
                             }
 
@@ -196,17 +216,25 @@ fun ConsultasScreen(
                                     mascotaId,
                                     motivo.trim(),
                                     selectedDate,
-                                    diagnostico = "Pendiente",
-                                    tratamiento = "Pendiente"
+                                    diagnostico = diagnostico.trim(),
+                                    tratamiento = tratamiento.trim()
                                 )
                                 msg = "Consulta guardada."
                             } else {
-                                vetVm.editarConsulta(editId!!, motivo.trim(), selectedDate)
+                                vetVm.editarConsulta(
+                                    editId!!,
+                                    motivo.trim(),
+                                    selectedDate,
+                                    diagnostico.trim(),
+                                    tratamiento.trim()
+                                )
                                 msg = "Consulta actualizada."
                             }
 
                             selectedMascota = null
                             motivo = ""
+                            diagnostico = ""
+                            tratamiento = ""
                             selectedDateMillis = null
                             editId = null
                         },
@@ -222,6 +250,8 @@ fun ConsultasScreen(
                                 editId = null
                                 selectedMascota = null
                                 motivo = ""
+                                diagnostico = ""
+                                tratamiento = ""
                                 selectedDateMillis = null
                                 msg = "Edicion cancelada."
                             }
@@ -281,7 +311,7 @@ fun ConsultasScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(consulta.motivo, style = MaterialTheme.typography.titleMedium)
                     Text("Fecha: ${consulta.fecha}")
-                    Text("Mascota: ${mascota?.nombre ?: "?"} (ID ${consulta.mascotaId})")
+                    Text("Mascota: ${mascota?.nombre ?: "?"}")
                     Text("Diagnostico: ${consulta.diagnostico}")
                     Text("Tratamiento: ${consulta.tratamiento}")
 
@@ -290,6 +320,8 @@ fun ConsultasScreen(
                             editId = consulta.id
                             selectedMascota = mascota
                             motivo = consulta.motivo
+                            diagnostico = consulta.diagnostico
+                            tratamiento = consulta.tratamiento
                             selectedDateMillis = parseConsultationDate(consulta.fecha)
                         }) { Text("Editar") }
 

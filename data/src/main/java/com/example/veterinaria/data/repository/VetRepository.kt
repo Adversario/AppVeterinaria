@@ -27,5 +27,5 @@ interface VetRepository {
     ): Consulta
 
     fun deleteConsulta(id: String)
-    fun updateConsulta(id: String, motivo: String, fecha: String)
+    fun updateConsulta(id: String, motivo: String, fecha: String, diagnostico: String, tratamiento: String)
 }

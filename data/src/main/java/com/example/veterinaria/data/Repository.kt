@@ -258,9 +258,22 @@ object Repository {
         db.consultationDao().deleteById(id)
     }
 
-    fun updateConsulta(id: String, motivo: String, fecha: String) = runBlocking {
+    fun updateConsulta(
+        id: String,
+        motivo: String,
+        fecha: String,
+        diagnostico: String,
+        tratamiento: String
+    ) = runBlocking {
         val old = db.consultationDao().getById(id) ?: return@runBlocking
-        db.consultationDao().update(old.copy(reason = motivo, date = fecha))
+        db.consultationDao().update(
+            old.copy(
+                reason = motivo,
+                date = fecha,
+                diagnosis = diagnostico,
+                treatment = tratamiento
+            )
+        )
     }
 
     fun addCita(mascotaId: String, fecha: String, nota: String): Cita = runBlocking {

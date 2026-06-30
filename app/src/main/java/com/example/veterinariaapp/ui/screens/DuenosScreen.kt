@@ -68,7 +68,6 @@ fun DuenosScreen(vetVm: VetViewModel) {
                 Column(Modifier.padding(16.dp)) {
                     Text(d.nombre, style = MaterialTheme.typography.titleMedium)
                     Text("Tel: ${d.telefono}")
-                    Text("ID: ${d.id}")
                 }
             }
         }

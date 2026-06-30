@@ -1,8 +1,27 @@
 package com.example.veterinariaapp.ui.screens
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.veterinariaapp.viewmodel.VetViewModel
@@ -20,54 +39,88 @@ fun ActivityLogScreen(vetVm: VetViewModel) {
         if (orden == "Reciente") base.sortedByDescending { it.epochMs } else base.sortedBy { it.epochMs }
     }
 
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        ElevatedCard(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Registro de actividades", style = MaterialTheme.typography.titleMedium)
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(bottom = 28.dp)
+    ) {
+        item {
+            ElevatedCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Registro de actividades", style = MaterialTheme.typography.titleMedium)
 
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    var e1 by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(expanded = e1, onExpandedChange = { e1 = !e1 }, modifier = Modifier.weight(1f)) {
-                        OutlinedTextField(
-                            value = filtro,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Tipo") },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(expanded = e1, onDismissRequest = { e1 = false }) {
-                            listOf("Todos", "AUTH", "CRUD", "NOTIF", "ERROR").forEach {
-                                DropdownMenuItem(text = { Text(it) }, onClick = { filtro = it; e1 = false })
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        var tipoExpanded by remember { mutableStateOf(false) }
+                        ExposedDropdownMenuBox(
+                            expanded = tipoExpanded,
+                            onExpandedChange = { tipoExpanded = !tipoExpanded },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            OutlinedTextField(
+                                value = filtro,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Tipo") },
+                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = tipoExpanded,
+                                onDismissRequest = { tipoExpanded = false }
+                            ) {
+                                listOf("Todos", "AUTH", "CRUD", "NOTIF", "ERROR").forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option) },
+                                        onClick = {
+                                            filtro = option
+                                            tipoExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        var ordenExpanded by remember { mutableStateOf(false) }
+                        ExposedDropdownMenuBox(
+                            expanded = ordenExpanded,
+                            onExpandedChange = { ordenExpanded = !ordenExpanded },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            OutlinedTextField(
+                                value = orden,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Orden") },
+                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = ordenExpanded,
+                                onDismissRequest = { ordenExpanded = false }
+                            ) {
+                                listOf("Reciente", "Antiguo").forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option) },
+                                        onClick = {
+                                            orden = option
+                                            ordenExpanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
 
-                    var e2 by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(expanded = e2, onExpandedChange = { e2 = !e2 }, modifier = Modifier.weight(1f)) {
-                        OutlinedTextField(
-                            value = orden,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Orden") },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(expanded = e2, onDismissRequest = { e2 = false }) {
-                            listOf("Reciente", "Antiguo").forEach {
-                                DropdownMenuItem(text = { Text(it) }, onClick = { orden = it; e2 = false })
-                            }
-                        }
-                    }
+                    Text("Eventos: ${visibles.size}")
                 }
-
-                Text("Eventos: ${visibles.size}")
             }
         }
 
-        visibles.take(50).forEach { ev ->
+        items(visibles, key = { "${it.epochMs}-${it.tipo}-${it.mensaje}" }) { event ->
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("${ev.tipo} • ${ev.hora}", style = MaterialTheme.typography.labelLarge)
-                    Text(ev.mensaje, style = MaterialTheme.typography.bodyLarge)
+                    Text("${event.tipo} - ${event.hora}", style = MaterialTheme.typography.labelLarge)
+                    Text(event.mensaje, style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }

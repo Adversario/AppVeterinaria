@@ -37,5 +37,6 @@ class RepositoryVetRepository {
         )
 
     fun deleteConsulta(id: String) = Repository.deleteConsulta(id)
-    fun updateConsulta(id: String, motivo: String, fecha: String) = Repository.updateConsulta(id, motivo, fecha)
+    fun updateConsulta(id: String, motivo: String, fecha: String, diagnostico: String, tratamiento: String) =
+        Repository.updateConsulta(id, motivo, fecha, diagnostico, tratamiento)
 }
