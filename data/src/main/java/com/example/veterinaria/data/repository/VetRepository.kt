@@ -11,7 +11,7 @@ interface VetRepository {
 
     fun addDueno(nombre: String, telefono: String): Dueno
     fun addMascota(
-        duenoId: Int,
+        duenoId: String,
         nombre: String,
         especie: String,
         raza: String = "N/A",
@@ -19,13 +19,13 @@ interface VetRepository {
     ): Mascota
 
     fun addConsulta(
-        mascotaId: Int,
+        mascotaId: String,
         motivo: String,
         fecha: String,
         diagnostico: String = "Pendiente",
         tratamiento: String = "Pendiente"
     ): Consulta
 
-    fun deleteConsulta(id: Int)
-    fun updateConsulta(id: Int, motivo: String, fecha: String)
+    fun deleteConsulta(id: String)
+    fun updateConsulta(id: String, motivo: String, fecha: String)
 }

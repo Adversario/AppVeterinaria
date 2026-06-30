@@ -9,9 +9,9 @@ import androidx.room.PrimaryKey
     indices = [Index(value = ["email"], unique = true)]
 )
 data class UserEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @PrimaryKey val id: String,
     val email: String,
     val password: String,
     val role: String,
-    val ownerId: Int? = null
+    val ownerId: String? = null
 )

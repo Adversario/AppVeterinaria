@@ -21,7 +21,7 @@ class ConsultasProvider : ContentProvider() {
 
     private val uriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
         addURI(AUTH, "consultas", ALL)
-        addURI(AUTH, "consultas/#", ONE)
+        addURI(AUTH, "consultas/*", ONE)
     }
 
     override fun onCreate(): Boolean = true
@@ -35,7 +35,7 @@ class ConsultasProvider : ContentProvider() {
     ): Cursor {
         return when (uriMatcher.match(uri)) {
             ALL -> obtenerTodas()
-            ONE -> obtenerPorId(uri.lastPathSegment?.toIntOrNull() ?: -1)
+            ONE -> obtenerPorId(uri.lastPathSegment.orEmpty())
             else -> throw IllegalArgumentException("URI no soportada: $uri")
         }
     }
@@ -48,7 +48,7 @@ class ConsultasProvider : ContentProvider() {
         return cursor
     }
 
-    private fun obtenerPorId(id: Int): Cursor {
+    private fun obtenerPorId(id: String): Cursor {
         val cursor = MatrixCursor(arrayOf("id", "mascotaId", "motivo", "fecha", "diagnostico", "tratamiento"))
         Repository.getConsultas().firstOrNull { it.id == id }?.let { c ->
             cursor.addRow(arrayOf(c.id, c.mascotaId, c.motivo, c.fecha, c.diagnostico, c.tratamiento))

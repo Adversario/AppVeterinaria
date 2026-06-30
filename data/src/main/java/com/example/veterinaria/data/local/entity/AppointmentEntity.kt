@@ -18,8 +18,8 @@ import androidx.room.PrimaryKey
     indices = [Index("petId")]
 )
 data class AppointmentEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val petId: Int,
+    @PrimaryKey val id: String,
+    val petId: String,
     val date: String,
     val note: String = ""
 )

@@ -18,8 +18,8 @@ import androidx.room.PrimaryKey
     indices = [Index("ownerId")]
 )
 data class PetEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val ownerId: Int,
+    @PrimaryKey val id: String,
+    val ownerId: String,
     val name: String,
     val species: String,
     val breed: String = "N/A",

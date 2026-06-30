@@ -18,10 +18,10 @@ interface ConsultationDao {
     suspend fun getAll(): List<ConsultationEntity>
 
     @Query("SELECT * FROM consultations WHERE id = :id LIMIT 1")
-    suspend fun getById(id: Int): ConsultationEntity?
+    suspend fun getById(id: String): ConsultationEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(consultation: ConsultationEntity): Long
+    suspend fun insert(consultation: ConsultationEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(consultations: List<ConsultationEntity>)
@@ -33,5 +33,5 @@ interface ConsultationDao {
     suspend fun delete(consultation: ConsultationEntity)
 
     @Query("DELETE FROM consultations WHERE id = :id")
-    suspend fun deleteById(id: Int)
+    suspend fun deleteById(id: String)
 }

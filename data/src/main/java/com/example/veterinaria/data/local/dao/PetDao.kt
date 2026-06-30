@@ -18,7 +18,7 @@ interface PetDao {
     suspend fun getAll(): List<PetEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(pet: PetEntity): Long
+    suspend fun insert(pet: PetEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(pets: List<PetEntity>)
@@ -30,5 +30,5 @@ interface PetDao {
     suspend fun delete(pet: PetEntity)
 
     @Query("DELETE FROM pets WHERE id = :id")
-    suspend fun deleteById(id: Int)
+    suspend fun deleteById(id: String)
 }

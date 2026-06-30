@@ -21,7 +21,7 @@ interface OwnerDao {
     suspend fun count(): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(owner: OwnerEntity): Long
+    suspend fun insert(owner: OwnerEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(owners: List<OwnerEntity>)
@@ -33,5 +33,5 @@ interface OwnerDao {
     suspend fun delete(owner: OwnerEntity)
 
     @Query("DELETE FROM owners WHERE id = :id")
-    suspend fun deleteById(id: Int)
+    suspend fun deleteById(id: String)
 }

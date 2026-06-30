@@ -24,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 object Repository {
 
@@ -71,7 +72,7 @@ object Repository {
                     appContext,
                     AppDatabase::class.java,
                     "veterinaria.db"
-                ).build()
+                ).fallbackToDestructiveMigration().build()
                 sessionPreferences = SessionPreferences(appContext)
                 runBlocking { seedIfNeeded() }
             }
@@ -83,41 +84,41 @@ object Repository {
 
         db.ownerDao().insertAll(
             listOf(
-                OwnerEntity(id = 1, name = "Ana Soto", phone = "+56 9 1234 5678"),
-                OwnerEntity(id = 2, name = "Carlos Ruiz", phone = "+56 9 8765 4321"),
-                OwnerEntity(id = 3, name = "Daniela Pérez", phone = "+56 9 2222 3333")
+                OwnerEntity(id = "owner-ana", name = "Ana Soto", phone = "+56 9 1234 5678"),
+                OwnerEntity(id = "owner-carlos", name = "Carlos Ruiz", phone = "+56 9 8765 4321"),
+                OwnerEntity(id = "owner-daniela", name = "Daniela Pérez", phone = "+56 9 2222 3333")
             )
         )
 
         db.petDao().insertAll(
             listOf(
-                PetEntity(id = 1, ownerId = 1, name = "Bruno", species = "Perro", breed = "Mestizo", age = 4),
-                PetEntity(id = 2, ownerId = 2, name = "Mishi", species = "Gato", breed = "Europeo", age = 2),
-                PetEntity(id = 3, ownerId = 3, name = "Lola", species = "Conejo", breed = "Enano", age = 1)
+                PetEntity(id = "pet-bruno", ownerId = "owner-ana", name = "Bruno", species = "Perro", breed = "Mestizo", age = 4),
+                PetEntity(id = "pet-mishi", ownerId = "owner-carlos", name = "Mishi", species = "Gato", breed = "Europeo", age = 2),
+                PetEntity(id = "pet-lola", ownerId = "owner-daniela", name = "Lola", species = "Conejo", breed = "Enano", age = 1)
             )
         )
 
         db.consultationDao().insertAll(
             listOf(
                 ConsultationEntity(
-                    id = 1,
-                    petId = 1,
+                    id = "consultation-control-bruno",
+                    petId = "pet-bruno",
                     reason = "Control",
                     date = "2025-11-10",
                     diagnosis = "OK",
                     treatment = "N/A"
                 ),
                 ConsultationEntity(
-                    id = 2,
-                    petId = 2,
+                    id = "consultation-vacuna-mishi",
+                    petId = "pet-mishi",
                     reason = "Vacuna",
                     date = "2025-11-22",
                     diagnosis = "Vacunación",
                     treatment = "Dosis aplicada"
                 ),
                 ConsultationEntity(
-                    id = 3,
-                    petId = 3,
+                    id = "consultation-chequeo-lola",
+                    petId = "pet-lola",
                     reason = "Chequeo",
                     date = "2025-11-28",
                     diagnosis = "OK",
@@ -128,8 +129,8 @@ object Repository {
 
         db.userDao().insertAll(
             listOf(
-                UserEntity(id = 1, email = "staff@vet.cl", password = "1234", role = "STAFF", ownerId = null),
-                UserEntity(id = 2, email = "owner1@vet.cl", password = "1234", role = "OWNER", ownerId = 1)
+                UserEntity(id = "user-staff", email = "staff@vet.cl", password = "1234", role = "STAFF", ownerId = null),
+                UserEntity(id = "user-owner-ana", email = "owner1@vet.cl", password = "1234", role = "OWNER", ownerId = "owner-ana")
             )
         )
     }
@@ -182,12 +183,14 @@ object Repository {
     }
 
     fun addDueno(nombre: String, telefono: String): Dueno = runBlocking {
-        val id = db.ownerDao().insert(OwnerEntity(name = nombre, phone = telefono)).toInt()
+        val id = newId()
+        db.ownerDao().insert(OwnerEntity(id = id, name = nombre, phone = telefono))
         val owner = Dueno(id = id, nombre = nombre, telefono = telefono)
 
         val ownerEmail = "owner${owner.id}@vet.cl"
         db.userDao().insert(
             UserEntity(
+                id = newId(),
                 email = ownerEmail,
                 password = "1234",
                 role = "OWNER",
@@ -199,44 +202,48 @@ object Repository {
     }
 
     fun addMascota(
-        duenoId: Int,
+        duenoId: String,
         nombre: String,
         especie: String,
         raza: String = "N/A",
         edad: Int = 0
     ): Mascota = runBlocking {
-        val id = db.petDao().insert(
+        val id = newId()
+        db.petDao().insert(
             PetEntity(
+                id = id,
                 ownerId = duenoId,
                 name = nombre,
                 species = especie,
                 breed = raza,
                 age = edad
             )
-        ).toInt()
+        )
         Mascota(id = id, duenoId = duenoId, nombre = nombre, especie = especie, raza = raza, edad = edad)
     }
 
-    fun deleteMascota(id: Int) = runBlocking {
+    fun deleteMascota(id: String) = runBlocking {
         db.petDao().deleteById(id)
     }
 
     fun addConsulta(
-        mascotaId: Int,
+        mascotaId: String,
         motivo: String,
         fecha: String,
         diagnostico: String = "Pendiente",
         tratamiento: String = "Pendiente"
     ): Consulta = runBlocking {
-        val id = db.consultationDao().insert(
+        val id = newId()
+        db.consultationDao().insert(
             ConsultationEntity(
+                id = id,
                 petId = mascotaId,
                 reason = motivo,
                 date = fecha,
                 diagnosis = diagnostico,
                 treatment = tratamiento
             )
-        ).toInt()
+        )
         Consulta(
             id = id,
             mascotaId = mascotaId,
@@ -247,27 +254,31 @@ object Repository {
         )
     }
 
-    fun deleteConsulta(id: Int) = runBlocking {
+    fun deleteConsulta(id: String) = runBlocking {
         db.consultationDao().deleteById(id)
     }
 
-    fun updateConsulta(id: Int, motivo: String, fecha: String) = runBlocking {
+    fun updateConsulta(id: String, motivo: String, fecha: String) = runBlocking {
         val old = db.consultationDao().getById(id) ?: return@runBlocking
         db.consultationDao().update(old.copy(reason = motivo, date = fecha))
     }
 
-    fun addCita(mascotaId: Int, fecha: String, nota: String): Cita = runBlocking {
-        val id = db.appointmentDao().insert(
+    fun addCita(mascotaId: String, fecha: String, nota: String): Cita = runBlocking {
+        val id = newId()
+        db.appointmentDao().insert(
             AppointmentEntity(
+                id = id,
                 petId = mascotaId,
                 date = fecha,
                 note = nota
             )
-        ).toInt()
+        )
         Cita(id = id, mascotaId = mascotaId, fecha = fecha, nota = nota)
     }
 
-    fun deleteCita(id: Int) = runBlocking {
+    fun deleteCita(id: String) = runBlocking {
         db.appointmentDao().deleteById(id)
     }
+
+    private fun newId(): String = UUID.randomUUID().toString()
 }

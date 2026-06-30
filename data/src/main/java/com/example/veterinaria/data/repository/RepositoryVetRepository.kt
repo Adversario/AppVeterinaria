@@ -18,7 +18,7 @@ class RepositoryVetRepository {
     fun addDueno(nombre: String, telefono: String): Dueno =
         Repository.addDueno(nombre, telefono)
 
-    fun addMascota(duenoId: Int, nombre: String, especie: String): Mascota =
+    fun addMascota(duenoId: String, nombre: String, especie: String): Mascota =
         Repository.addMascota(
             duenoId = duenoId,
             nombre = nombre,
@@ -27,7 +27,7 @@ class RepositoryVetRepository {
             edad = 0
         )
 
-    fun addConsulta(mascotaId: Int, motivo: String, fecha: String): Consulta =
+    fun addConsulta(mascotaId: String, motivo: String, fecha: String): Consulta =
         Repository.addConsulta(
             mascotaId = mascotaId,
             motivo = motivo,
@@ -36,6 +36,6 @@ class RepositoryVetRepository {
             tratamiento = "Pendiente"
         )
 
-    fun deleteConsulta(id: Int) = Repository.deleteConsulta(id)
-    fun updateConsulta(id: Int, motivo: String, fecha: String) = Repository.updateConsulta(id, motivo, fecha)
+    fun deleteConsulta(id: String) = Repository.deleteConsulta(id)
+    fun updateConsulta(id: String, motivo: String, fecha: String) = Repository.updateConsulta(id, motivo, fecha)
 }

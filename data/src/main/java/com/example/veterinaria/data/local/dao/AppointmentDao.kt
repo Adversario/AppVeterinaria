@@ -18,7 +18,7 @@ interface AppointmentDao {
     suspend fun getAll(): List<AppointmentEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(appointment: AppointmentEntity): Long
+    suspend fun insert(appointment: AppointmentEntity)
 
     @Update
     suspend fun update(appointment: AppointmentEntity)
@@ -27,5 +27,5 @@ interface AppointmentDao {
     suspend fun delete(appointment: AppointmentEntity)
 
     @Query("DELETE FROM appointments WHERE id = :id")
-    suspend fun deleteById(id: Int)
+    suspend fun deleteById(id: String)
 }

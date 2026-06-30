@@ -109,7 +109,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun agregarMascota(duenoId: Int, nombre: String, especie: String, raza: String, edad: Int) {
+    fun agregarMascota(duenoId: String, nombre: String, especie: String, raza: String, edad: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.addMascota(duenoId, nombre, especie, raza, edad)
             Repository.logCrud("Crear mascota: $nombre (dueñoId=$duenoId)")
@@ -117,7 +117,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun eliminarMascota(id: Int) {
+    fun eliminarMascota(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.deleteMascota(id)
             Repository.logCrud("Eliminar mascota id=$id")
@@ -125,7 +125,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun agregarConsulta(mascotaId: Int, motivo: String, fecha: String, diagnostico: String, tratamiento: String) {
+    fun agregarConsulta(mascotaId: String, motivo: String, fecha: String, diagnostico: String, tratamiento: String) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.addConsulta(mascotaId, motivo, fecha, diagnostico, tratamiento)
             Repository.logCrud("Crear consulta mascotaId=$mascotaId ($fecha)")
@@ -133,7 +133,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun editarConsulta(id: Int, motivo: String, fecha: String) {
+    fun editarConsulta(id: String, motivo: String, fecha: String) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.updateConsulta(id, motivo, fecha)
             Repository.logCrud("Editar consulta id=$id")
@@ -141,7 +141,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun eliminarConsulta(id: Int) {
+    fun eliminarConsulta(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.deleteConsulta(id)
             Repository.logCrud("Eliminar consulta id=$id")
@@ -149,7 +149,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun agendarCita(mascotaId: Int, fecha: String, nota: String) {
+    fun agendarCita(mascotaId: String, fecha: String, nota: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val cita = Repository.addCita(mascotaId, fecha, nota)
             Repository.logCrud("Agendar cita id=${cita.id} mascotaId=$mascotaId ($fecha)")
@@ -161,7 +161,7 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun eliminarCita(id: Int) {
+    fun eliminarCita(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             Repository.deleteCita(id)
             Repository.logCrud("Eliminar cita id=$id")

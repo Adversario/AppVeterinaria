@@ -2,7 +2,6 @@ package com.example.veterinaria.data.local.session
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.veterinaria.data.model.Session
@@ -14,7 +13,7 @@ private val Context.sessionDataStore by preferencesDataStore(name = "session_pre
 class SessionPreferences(private val context: Context) {
     private val emailKey = stringPreferencesKey("email")
     private val roleKey = stringPreferencesKey("role")
-    private val ownerIdKey = intPreferencesKey("owner_id")
+    private val ownerIdKey = stringPreferencesKey("owner_id")
 
     val session: Flow<Session?> = context.sessionDataStore.data.map { prefs ->
         val email = prefs[emailKey] ?: return@map null
