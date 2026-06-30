@@ -19,6 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -57,8 +59,15 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
 
     val activityLog: StateFlow<List<ActivityEvent>> = Repository.activityLog
 
+    val proximasCitas: StateFlow<List<Cita>>
+
     init {
         Repository.init(app)
+        proximasCitas = Repository.proximasCitasFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
         observeLocalData()
     }
 

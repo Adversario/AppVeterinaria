@@ -14,6 +14,9 @@ interface AppointmentDao {
     @Query("SELECT * FROM appointments ORDER BY date, id")
     fun observeAll(): Flow<List<AppointmentEntity>>
 
+    @Query("SELECT * FROM appointments WHERE date >= :currentDate ORDER BY date ASC LIMIT 2")
+    fun observeNextTwo(currentDate: String): Flow<List<AppointmentEntity>>
+
     @Query("SELECT * FROM appointments ORDER BY date, id")
     suspend fun getAll(): List<AppointmentEntity>
 

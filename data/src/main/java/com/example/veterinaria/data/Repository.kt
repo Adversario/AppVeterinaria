@@ -62,6 +62,11 @@ object Repository {
     val citasFlow: Flow<List<Cita>>
         get() = db.appointmentDao().observeAll().map { rows -> rows.map { it.toDomain() } }
 
+    val proximasCitasFlow: Flow<List<Cita>>
+        get() = db.appointmentDao().observeNextTwo(currentAppointmentDate()).map { rows ->
+            rows.map { it.toDomain() }
+        }
+
     fun init(context: Context) {
         if (database != null && sessionPreferences != null) return
 
@@ -137,6 +142,9 @@ object Repository {
 
     private fun nowLabel(): String =
         SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+
+    private fun currentAppointmentDate(): String =
+        SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date())
 
     private fun push(tipo: String, msg: String) {
         val ev = ActivityEvent(tipo = tipo, mensaje = msg, epochMs = System.currentTimeMillis(), hora = nowLabel())
