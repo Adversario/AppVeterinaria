@@ -11,16 +11,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,12 +42,21 @@ fun DuenosScreen(vetVm: VetViewModel) {
     val duenos by vetVm.filteredDuenos.collectAsState()
     val searchQuery by vetVm.searchDuenoQuery.collectAsState()
 
-    var nombre by remember { mutableStateOf("") }
-    var telefono by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
+    var showCreate by remember { mutableStateOf(false) }
     var msg by remember { mutableStateOf<String?>(null) }
     var editing by remember { mutableStateOf<Dueno?>(null) }
     var deleteTarget by remember { mutableStateOf<Dueno?>(null) }
+
+    if (showCreate) {
+        CreateDuenoDialog(
+            onDismiss = { showCreate = false },
+            onConfirm = { nombre, telefono, email ->
+                vetVm.agregarDueno(nombre, telefono, email)
+                showCreate = false
+                msg = "Dueno guardado."
+            }
+        )
+    }
 
     editing?.let { dueno ->
         EditDuenoDialog(
@@ -79,98 +90,98 @@ fun DuenosScreen(vetVm: VetViewModel) {
         )
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(bottom = 28.dp)
-    ) {
-        item {
-            ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Registrar dueno", style = MaterialTheme.typography.titleMedium)
-
-                    OutlinedTextField(
-                        value = nombre,
-                        onValueChange = { nombre = it },
-                        label = { Text("Nombre") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = telefono,
-                        onValueChange = { telefono = it },
-                        label = { Text("Telefono") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-                    )
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it.filter { char -> !char.isWhitespace() } },
-                        label = { Text("Correo Electronico") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-
-                    Button(
-                        onClick = {
-                            if (nombre.isBlank() || telefono.isBlank()) {
-                                msg = "Completa nombre y telefono."
-                            } else {
-                                vetVm.agregarDueno(nombre.trim(), telefono.trim(), email.trim().ifBlank { null })
-                                msg = "Dueno guardado."
-                                nombre = ""
-                                telefono = ""
-                                email = ""
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Guardar") }
-
-                    msg?.let { Text(it) }
-                }
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showCreate = true }) {
+                Icon(Icons.Filled.Add, contentDescription = "Registrar dueno")
             }
         }
-
-        item {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { vetVm.searchDuenoQuery.value = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                leadingIcon = {
-                    Icon(Icons.Filled.Search, contentDescription = null)
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { vetVm.searchDuenoQuery.value = "" }) {
-                            Icon(Icons.Filled.Clear, contentDescription = "Limpiar busqueda")
+    ) { inner ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(inner)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom = 88.dp)
+        ) {
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { vetVm.searchDuenoQuery.value = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { vetVm.searchDuenoQuery.value = "" }) {
+                                Icon(Icons.Filled.Clear, contentDescription = "Limpiar busqueda")
+                            }
                         }
-                    }
-                },
-                placeholder = { Text("Buscar dueno por nombre...") }
-            )
-        }
+                    },
+                    placeholder = { Text("Buscar dueno por nombre...") }
+                )
+            }
 
-        items(duenos, key = { it.id }) { dueno ->
-            ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(dueno.nombre, style = MaterialTheme.typography.titleMedium)
-                            Text("Tel: ${dueno.telefono}")
-                            dueno.email?.takeIf { it.isNotBlank() }?.let { Text("Correo: $it") }
+            msg?.let {
+                item { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            }
+
+            items(duenos, key = { it.id }) { dueno ->
+                ElevatedCard(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(dueno.nombre, style = MaterialTheme.typography.titleMedium)
+                                Text("Tel: ${dueno.telefono}")
+                                dueno.email?.takeIf { it.isNotBlank() }?.let { Text("Correo: $it") }
+                            }
+                            ContactActionButtons(phone = dueno.telefono)
                         }
-                        ContactActionButtons(phone = dueno.telefono)
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedButton(onClick = { editing = dueno }) { Text("Editar") }
-                        OutlinedButton(onClick = { deleteTarget = dueno }) { Text("Eliminar") }
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            OutlinedButton(onClick = { editing = dueno }) { Text("Editar") }
+                            OutlinedButton(onClick = { deleteTarget = dueno }) { Text("Eliminar") }
+                        }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun CreateDuenoDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, String?) -> Unit
+) {
+    var nombre by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Registrar dueno") },
+        text = {
+            DuenoFields(
+                nombre = nombre,
+                onNombreChange = { nombre = it },
+                telefono = telefono,
+                onTelefonoChange = { telefono = it },
+                email = email,
+                onEmailChange = { email = it }
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (nombre.isNotBlank() && telefono.isNotBlank()) {
+                        onConfirm(nombre.trim(), telefono.trim(), email.trim().ifBlank { null })
+                    }
+                }
+            ) { Text("Guardar") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+    )
 }
 
 @Composable
@@ -187,28 +198,14 @@ private fun EditDuenoDialog(
         onDismissRequest = onDismiss,
         title = { Text("Editar dueno") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { nombre = it },
-                    label = { Text("Nombre") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = telefono,
-                    onValueChange = { telefono = it },
-                    label = { Text("Telefono") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-                )
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it.filter { char -> !char.isWhitespace() } },
-                    label = { Text("Correo Electronico") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-            }
+            DuenoFields(
+                nombre = nombre,
+                onNombreChange = { nombre = it },
+                telefono = telefono,
+                onTelefonoChange = { telefono = it },
+                email = email,
+                onEmailChange = { email = it }
+            )
         },
         confirmButton = {
             TextButton(
@@ -219,8 +216,39 @@ private fun EditDuenoDialog(
                 }
             ) { Text("Guardar") }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
-        }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
     )
+}
+
+@Composable
+private fun DuenoFields(
+    nombre: String,
+    onNombreChange: (String) -> Unit,
+    telefono: String,
+    onTelefonoChange: (String) -> Unit,
+    email: String,
+    onEmailChange: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedTextField(
+            value = nombre,
+            onValueChange = onNombreChange,
+            label = { Text("Nombre") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = telefono,
+            onValueChange = onTelefonoChange,
+            label = { Text("Telefono") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+        )
+        OutlinedTextField(
+            value = email,
+            onValueChange = { onEmailChange(it.filter { char -> !char.isWhitespace() }) },
+            label = { Text("Correo Electronico") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+    }
 }

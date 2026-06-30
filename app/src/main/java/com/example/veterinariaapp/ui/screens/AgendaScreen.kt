@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Schedule
@@ -21,10 +22,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,10 +36,10 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -54,7 +57,64 @@ private const val DateTimePattern = "yyyy-MM-dd HH:mm"
 fun AgendaScreen(vetVm: VetViewModel) {
     val mascotas by vetVm.mascotas.observeAsState(emptyList())
     val citas by vetVm.citas.observeAsState(emptyList())
+    val citasOrdenadas = remember(citas) { citas.sortedBy { it.fecha } }
 
+    var showCreate by remember { mutableStateOf(false) }
+    var msg by remember { mutableStateOf<String?>(null) }
+
+    if (showCreate) {
+        CreateAppointmentDialog(
+            mascotas = mascotas,
+            onDismiss = { showCreate = false },
+            onConfirm = { mascotaId, fecha, motivo ->
+                vetVm.agendarCita(mascotaId, fecha, motivo)
+                showCreate = false
+                msg = "Cita agendada correctamente."
+            }
+        )
+    }
+
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showCreate = true }) {
+                Icon(Icons.Filled.Add, contentDescription = "Agendar cita")
+            }
+        }
+    ) { inner ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(inner)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom = 88.dp)
+        ) {
+            msg?.let {
+                item { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            }
+
+            item {
+                Text("Citas agendadas (${citasOrdenadas.size})", style = MaterialTheme.typography.titleMedium)
+            }
+
+            items(citasOrdenadas, key = { it.id }) { cita ->
+                AppointmentCard(
+                    cita = cita,
+                    mascota = mascotas.firstOrNull { it.id == cita.mascotaId },
+                    onDelete = { vetVm.eliminarCita(cita.id) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CreateAppointmentDialog(
+    mascotas: List<Mascota>,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, String) -> Unit
+) {
     var selectedPet by remember { mutableStateOf<Mascota?>(null) }
     var motivo by remember { mutableStateOf("") }
     var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
@@ -63,10 +123,8 @@ fun AgendaScreen(vetVm: VetViewModel) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var petMenuExpanded by remember { mutableStateOf(false) }
-    var msg by remember { mutableStateOf<String?>(null) }
 
     val todayStartMillis = remember { startOfTodayMillis() }
-    val citasOrdenadas = remember(citas) { citas.sortedBy { it.fecha } }
     val selectedDateLabel = selectedDateMillis?.let { formatDateLabel(it) } ?: "Seleccionar fecha"
     val selectedTimeLabel = if (selectedHour != null && selectedMinute != null) {
         "%02d:%02d hrs".format(selectedHour, selectedMinute)
@@ -82,7 +140,6 @@ fun AgendaScreen(vetVm: VetViewModel) {
                     utcTimeMillis >= todayStartMillis
             }
         )
-
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -92,13 +149,9 @@ fun AgendaScreen(vetVm: VetViewModel) {
                         showDatePicker = false
                     },
                     enabled = datePickerState.selectedDateMillis != null
-                ) {
-                    Text("Aceptar")
-                }
+                ) { Text("Aceptar") }
             },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
-            }
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
         ) {
             DatePicker(state = datePickerState)
         }
@@ -111,7 +164,6 @@ fun AgendaScreen(vetVm: VetViewModel) {
             initialMinute = selectedMinute ?: roundedMinute(now.get(Calendar.MINUTE)),
             is24Hour = false
         )
-
         TimePickerDialog(
             onDismissRequest = { showTimePicker = false },
             confirmButton = {
@@ -121,139 +173,77 @@ fun AgendaScreen(vetVm: VetViewModel) {
                         selectedMinute = timePickerState.minute
                         showTimePicker = false
                     }
-                ) {
-                    Text("Aceptar")
-                }
+                ) { Text("Aceptar") }
             },
-            dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") }
-            }
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") } }
         ) {
             TimePicker(state = timePickerState)
         }
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(bottom = 28.dp)
-    ) {
-        item {
-            ElevatedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Agendar cita", style = MaterialTheme.typography.titleMedium)
-
-                    ExposedDropdownMenuBox(
-                        expanded = petMenuExpanded,
-                        onExpandedChange = { petMenuExpanded = !petMenuExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = selectedPet?.let { "${it.nombre} - ${it.especie}" } ?: "",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Mascota") },
-                            supportingText = {
-                                Text(if (mascotas.isEmpty()) "Registra una mascota antes de agendar." else "Selecciona paciente")
-                            },
-                            modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = petMenuExpanded,
-                            onDismissRequest = { petMenuExpanded = false }
-                        ) {
-                            mascotas.forEach { pet ->
-                                DropdownMenuItem(
-                                    text = { Text("${pet.nombre} - ${pet.especie}") },
-                                    onClick = {
-                                        selectedPet = pet
-                                        petMenuExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Agendar cita") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ExposedDropdownMenuBox(
+                    expanded = petMenuExpanded,
+                    onExpandedChange = { petMenuExpanded = !petMenuExpanded }
+                ) {
                     OutlinedTextField(
-                        value = motivo,
-                        onValueChange = { motivo = it },
-                        label = { Text("Motivo de la cita") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        value = selectedPet?.let { "${it.nombre} - ${it.especie}" } ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Mascota") },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
-
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Button(
-                            onClick = { showDatePicker = true },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Filled.Event, contentDescription = null)
-                            Text(selectedDateLabel, modifier = Modifier.padding(start = 8.dp))
-                        }
-                        Button(
-                            onClick = { showTimePicker = true },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Filled.Schedule, contentDescription = null)
-                            Text(selectedTimeLabel, modifier = Modifier.padding(start = 8.dp))
+                    ExposedDropdownMenu(expanded = petMenuExpanded, onDismissRequest = { petMenuExpanded = false }) {
+                        mascotas.forEach { pet ->
+                            DropdownMenuItem(
+                                text = { Text("${pet.nombre} - ${pet.especie}") },
+                                onClick = {
+                                    selectedPet = pet
+                                    petMenuExpanded = false
+                                }
+                            )
                         }
                     }
-
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            val pet = selectedPet
-                            val dateMillis = selectedDateMillis
-                            val hour = selectedHour
-                            val minute = selectedMinute
-
-                            if (pet == null) {
-                                msg = "Selecciona una mascota."
-                                return@Button
-                            }
-                            if (motivo.isBlank()) {
-                                msg = "Ingresa el motivo de la cita."
-                                return@Button
-                            }
-                            if (dateMillis == null || hour == null || minute == null) {
-                                msg = "Selecciona fecha y hora."
-                                return@Button
-                            }
-
-                            val isoDateTime = formatIsoDateTime(dateMillis, hour, minute)
-                            vetVm.agendarCita(pet.id, isoDateTime, motivo.trim())
-                            msg = "Cita agendada correctamente."
-                            selectedPet = null
-                            motivo = ""
-                            selectedDateMillis = null
-                            selectedHour = null
-                            selectedMinute = null
-                        },
-                        enabled = mascotas.isNotEmpty()
-                    ) {
-                        Text("Guardar cita")
+                }
+                OutlinedTextField(
+                    value = motivo,
+                    onValueChange = { motivo = it },
+                    label = { Text("Motivo de la cita") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Filled.Event, contentDescription = null)
+                        Text(selectedDateLabel, modifier = Modifier.padding(start = 8.dp))
                     }
-
-                    msg?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    Button(onClick = { showTimePicker = true }, modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Filled.Schedule, contentDescription = null)
+                        Text(selectedTimeLabel, modifier = Modifier.padding(start = 8.dp))
+                    }
                 }
             }
-        }
-
-        item {
-            Text("Citas agendadas (${citasOrdenadas.size})", style = MaterialTheme.typography.titleMedium)
-        }
-
-        items(citasOrdenadas, key = { it.id }) { cita ->
-            AppointmentCard(
-                cita = cita,
-                mascota = mascotas.firstOrNull { it.id == cita.mascotaId },
-                onDelete = { vetVm.eliminarCita(cita.id) }
-            )
-        }
-    }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val pet = selectedPet
+                    val dateMillis = selectedDateMillis
+                    val hour = selectedHour
+                    val minute = selectedMinute
+                    if (pet != null && motivo.isNotBlank() && dateMillis != null && hour != null && minute != null) {
+                        onConfirm(pet.id, formatIsoDateTime(dateMillis, hour, minute), motivo.trim())
+                    }
+                },
+                enabled = mascotas.isNotEmpty()
+            ) { Text("Guardar") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+    )
 }
 
 @Composable
@@ -270,14 +260,8 @@ private fun AppointmentCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = mascota?.nombre ?: "Mascota no encontrada",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = if (cita.nota.isBlank()) "Sin motivo registrado" else cita.nota,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(mascota?.nombre ?: "Mascota no encontrada", style = MaterialTheme.typography.titleMedium)
+                Text(if (cita.nota.isBlank()) "Sin motivo registrado" else cita.nota, style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = formatFriendlyDateTime(cita.fecha),
                     style = MaterialTheme.typography.labelLarge,
@@ -285,11 +269,7 @@ private fun AppointmentCard(
                 )
             }
             IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Filled.Delete,
-                    contentDescription = "Cancelar cita",
-                    tint = MaterialTheme.colorScheme.error
-                )
+                Icon(Icons.Filled.Delete, contentDescription = "Cancelar cita", tint = MaterialTheme.colorScheme.error)
             }
         }
     }
