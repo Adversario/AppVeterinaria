@@ -37,3 +37,5 @@ AppVeterinaria/
 ├── data/              # Capa de Datos (Room DB, DAOs, Mappers, Repositorio)
 └── util/              # Módulo de Utilidades (PdfGenerator, Validadores)
 ```
+
+---
