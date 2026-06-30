@@ -3,14 +3,34 @@ package com.example.veterinariaapp.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.livedata.observeAsState
+import com.example.veterinaria.data.model.Dueno
 import com.example.veterinariaapp.viewmodel.AuthViewModel
 import com.example.veterinariaapp.viewmodel.VetViewModel
 
@@ -27,7 +47,8 @@ fun MascotasScreen(
     val duenos by vetVm.duenos.observeAsState(emptyList())
     val mascotas by vetVm.mascotas.observeAsState(emptyList())
 
-    var duenoIdTxt by remember { mutableStateOf("") }
+    var selectedDueno by remember { mutableStateOf<Dueno?>(null) }
+    var duenoMenuExpanded by remember { mutableStateOf(false) }
     var nombre by remember { mutableStateOf("") }
     var especie by remember { mutableStateOf("") }
     var raza by remember { mutableStateOf("") }
@@ -40,8 +61,8 @@ fun MascotasScreen(
     val visibles = remember(mascotas, filtroEspecie, orden, isOwner, ownerId) {
         mascotas
             .asSequence()
-            .filter { m -> if (!isOwner) true else m.duenoId == ownerId }
-            .filter { m -> filtroEspecie == "Todas" || m.especie.equals(filtroEspecie, true) }
+            .filter { pet -> if (!isOwner) true else pet.duenoId == ownerId }
+            .filter { pet -> filtroEspecie == "Todas" || pet.especie.equals(filtroEspecie, true) }
             .let { seq ->
                 when (orden) {
                     "Nombre" -> seq.sortedBy { it.nombre.lowercase() }
@@ -69,16 +90,35 @@ fun MascotasScreen(
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text("Registrar mascota", style = MaterialTheme.typography.titleMedium)
 
-                        OutlinedTextField(
-                            value = duenoIdTxt,
-                            onValueChange = { duenoIdTxt = it },
-                            label = { Text("Dueño ID") },
-                            supportingText = {
-                                val ids = duenos.joinToString { it.id.toString() }
-                                Text("IDs disponibles: $ids")
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        ExposedDropdownMenuBox(
+                            expanded = duenoMenuExpanded,
+                            onExpandedChange = { duenoMenuExpanded = !duenoMenuExpanded }
+                        ) {
+                            OutlinedTextField(
+                                value = selectedDueno?.nombre ?: "",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Dueno") },
+                                supportingText = {
+                                    Text(if (duenos.isEmpty()) "Registra un dueno antes de crear mascotas." else "Selecciona el responsable")
+                                },
+                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = duenoMenuExpanded,
+                                onDismissRequest = { duenoMenuExpanded = false }
+                            ) {
+                                duenos.forEach { dueno ->
+                                    DropdownMenuItem(
+                                        text = { Text("${dueno.nombre} - ID ${dueno.id}") },
+                                        onClick = {
+                                            selectedDueno = dueno
+                                            duenoMenuExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
 
                         OutlinedTextField(nombre, { nombre = it }, label = { Text("Nombre de la mascota") }, modifier = Modifier.fillMaxWidth())
                         OutlinedTextField(especie, { especie = it }, label = { Text("Especie") }, modifier = Modifier.fillMaxWidth())
@@ -88,20 +128,24 @@ fun MascotasScreen(
                         Button(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
-                                val did = duenoIdTxt.toIntOrNull()
+                                val duenoId = selectedDueno?.id
                                 val edad = edadTxt.toIntOrNull()
 
-                                if (did == null || did <= 0) {
-                                    msg = "Dueño ID inválido."
+                                if (duenoId == null) {
+                                    msg = "Selecciona un dueno."
                                     return@Button
                                 }
                                 if (nombre.isBlank() || especie.isBlank() || raza.isBlank() || edad == null || edad < 0) {
-                                    msg = "Completa nombre/especie/raza y edad válida."
+                                    msg = "Completa nombre/especie/raza y edad valida."
                                     return@Button
                                 }
-                                vetVm.agregarMascota(did, nombre.trim(), especie.trim(), raza.trim(), edad)
-                                msg = "Mascota guardada ✅"
-                                duenoIdTxt = ""; nombre = ""; especie = ""; raza = ""; edadTxt = ""
+                                vetVm.agregarMascota(duenoId, nombre.trim(), especie.trim(), raza.trim(), edad)
+                                msg = "Mascota guardada."
+                                selectedDueno = null
+                                nombre = ""
+                                especie = ""
+                                raza = ""
+                                edadTxt = ""
                             }
                         ) { Text("Guardar mascota") }
 
@@ -131,10 +175,13 @@ fun MascotasScreen(
                                 modifier = Modifier.menuAnchor().fillMaxWidth()
                             )
                             ExposedDropdownMenu(expanded = exp1, onDismissRequest = { exp1 = false }) {
-                                especiesDisponibles.forEach { e ->
+                                especiesDisponibles.forEach { especieDisponible ->
                                     DropdownMenuItem(
-                                        text = { Text(e) },
-                                        onClick = { filtroEspecie = e; exp1 = false }
+                                        text = { Text(especieDisponible) },
+                                        onClick = {
+                                            filtroEspecie = especieDisponible
+                                            exp1 = false
+                                        }
                                     )
                                 }
                             }
@@ -154,10 +201,13 @@ fun MascotasScreen(
                                 modifier = Modifier.menuAnchor().fillMaxWidth()
                             )
                             ExposedDropdownMenu(expanded = exp2, onDismissRequest = { exp2 = false }) {
-                                listOf("ID", "Nombre", "Especie").forEach { o ->
+                                listOf("ID", "Nombre", "Especie").forEach { option ->
                                     DropdownMenuItem(
-                                        text = { Text(o) },
-                                        onClick = { orden = o; exp2 = false }
+                                        text = { Text(option) },
+                                        onClick = {
+                                            orden = option
+                                            exp2 = false
+                                        }
                                     )
                                 }
                             }
@@ -167,14 +217,14 @@ fun MascotasScreen(
             }
         }
 
-        items(visibles, key = { it.id }) { m ->
+        items(visibles, key = { it.id }) { pet ->
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(m.nombre, style = MaterialTheme.typography.titleMedium)
-                    Text("Especie: ${m.especie} • Raza: ${m.raza} • Edad: ${m.edad}")
-                    Text("Dueño ID: ${m.duenoId} • ID: ${m.id}")
+                    Text(pet.nombre, style = MaterialTheme.typography.titleMedium)
+                    Text("Especie: ${pet.especie} - Raza: ${pet.raza} - Edad: ${pet.edad}")
+                    Text("Dueno ID: ${pet.duenoId} - ID: ${pet.id}")
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedButton(onClick = { vetVm.eliminarMascota(m.id) }) { Text("Eliminar") }
+                        OutlinedButton(onClick = { vetVm.eliminarMascota(pet.id) }) { Text("Eliminar") }
                     }
                 }
             }

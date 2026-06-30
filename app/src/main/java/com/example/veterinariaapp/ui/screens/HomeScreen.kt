@@ -1,15 +1,23 @@
 package com.example.veterinariaapp.ui.screens
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.veterinariaapp.viewmodel.VetViewModel
-import androidx.compose.runtime.livedata.observeAsState
 
 @Composable
-fun HomeScreen(vetVm: VetViewModel) {
+fun HomeScreen(vetVm: VetViewModel, isOwner: Boolean) {
     val isLoading by vetVm.isLoading.observeAsState(false)
     val totalMascotas by vetVm.totalMascotas.observeAsState(0)
     val totalConsultas by vetVm.totalConsultas.observeAsState(0)
@@ -34,19 +42,21 @@ fun HomeScreen(vetVm: VetViewModel) {
             }
         }
 
-        ElevatedCard(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp)) {
-                Text("Último dueño registrado", style = MaterialTheme.typography.labelLarge)
-                Text(ultimo, style = MaterialTheme.typography.titleLarge)
-            }
-        }
-
-        Text("Dueños (${duenos.size})", style = MaterialTheme.typography.titleMedium)
-        duenos.take(4).forEach { d ->
+        if (!isOwner) {
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text(d.nombre, style = MaterialTheme.typography.titleMedium)
-                    Text("Tel: ${d.telefono}  •  ID: ${d.id}")
+                    Text("Ultimo dueno registrado", style = MaterialTheme.typography.labelLarge)
+                    Text(ultimo, style = MaterialTheme.typography.titleLarge)
+                }
+            }
+
+            Text("Duenos (${duenos.size})", style = MaterialTheme.typography.titleMedium)
+            duenos.take(4).forEach { dueno ->
+                ElevatedCard(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(dueno.nombre, style = MaterialTheme.typography.titleMedium)
+                        Text("Tel: ${dueno.telefono} - ID: ${dueno.id}")
+                    }
                 }
             }
         }
