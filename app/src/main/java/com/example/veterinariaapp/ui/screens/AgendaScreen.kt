@@ -216,14 +216,23 @@ private fun CreateAppointmentDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.Event, contentDescription = null)
-                        Text(selectedDateLabel, modifier = Modifier.padding(start = 8.dp))
+                        Text(
+                            if (selectedDateMillis == null) "Fecha" else selectedDateLabel,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
                     }
-                    Button(onClick = { showTimePicker = true }, modifier = Modifier.weight(1f)) {
+                    Button(onClick = { showTimePicker = true }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.Schedule, contentDescription = null)
-                        Text(selectedTimeLabel, modifier = Modifier.padding(start = 8.dp))
+                        Text(
+                            if (selectedHour == null || selectedMinute == null) "Hora" else selectedTimeLabel,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
                     }
                 }
             }

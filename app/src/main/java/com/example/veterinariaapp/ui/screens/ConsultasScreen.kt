@@ -362,10 +362,6 @@ private fun ConsultaFields(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(motivo, onMotivoChange, label = { Text("Motivo") }, modifier = Modifier.fillMaxWidth())
-        Button(onClick = onDateClick, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Filled.Event, contentDescription = null)
-            Text(selectedDate.ifBlank { "Seleccionar fecha" }, modifier = Modifier.padding(start = 8.dp))
-        }
         OutlinedTextField(
             value = diagnostico,
             onValueChange = onDiagnosticoChange,
@@ -382,6 +378,10 @@ private fun ConsultaFields(
             singleLine = false,
             maxLines = 5
         )
+        Button(onClick = onDateClick, modifier = Modifier.fillMaxWidth()) {
+            Icon(Icons.Filled.Event, contentDescription = null)
+            Text(selectedDate.ifBlank { "Seleccionar fecha" }, modifier = Modifier.padding(start = 8.dp))
+        }
     }
 }
 
