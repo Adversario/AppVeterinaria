@@ -108,10 +108,26 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun agregarDueno(nombre: String, telefono: String) {
+    fun agregarDueno(nombre: String, telefono: String, email: String?) {
         viewModelScope.launch(Dispatchers.IO) {
-            Repository.addDueno(nombre, telefono)
+            Repository.addDueno(nombre, telefono, email)
             Repository.logCrud("Crear dueno: $nombre")
+            cargarResumenConProgreso()
+        }
+    }
+
+    fun editarDueno(id: String, nombre: String, telefono: String, email: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            Repository.updateDueno(id, nombre, telefono, email)
+            Repository.logCrud("Editar dueno: $nombre")
+            cargarResumenConProgreso()
+        }
+    }
+
+    fun eliminarDueno(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            Repository.deleteDueno(id)
+            Repository.logCrud("Eliminar dueno")
             cargarResumenConProgreso()
         }
     }

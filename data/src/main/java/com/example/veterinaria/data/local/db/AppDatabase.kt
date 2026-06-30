@@ -21,7 +21,7 @@ import com.example.veterinaria.data.local.entity.UserEntity
         AppointmentEntity::class,
         UserEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

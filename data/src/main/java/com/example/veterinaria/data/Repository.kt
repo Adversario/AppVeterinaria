@@ -84,8 +84,8 @@ object Repository {
 
         db.ownerDao().insertAll(
             listOf(
-                OwnerEntity(id = "owner-ana", name = "Ana Soto", phone = "+56 9 1234 5678"),
-                OwnerEntity(id = "owner-carlos", name = "Carlos Ruiz", phone = "+56 9 8765 4321"),
+                OwnerEntity(id = "owner-ana", name = "Ana Soto", phone = "+56 9 1234 5678", email = "ana.soto@vet-demo.cl"),
+                OwnerEntity(id = "owner-carlos", name = "Carlos Ruiz", phone = "+56 9 8765 4321", email = "carlos.ruiz@vet-demo.cl"),
                 OwnerEntity(id = "owner-daniela", name = "Daniela Pérez", phone = "+56 9 2222 3333")
             )
         )
@@ -182,12 +182,13 @@ object Repository {
         db.appointmentDao().getAll().map { it.toDomain() }
     }
 
-    fun addDueno(nombre: String, telefono: String): Dueno = runBlocking {
+    fun addDueno(nombre: String, telefono: String, email: String? = null): Dueno = runBlocking {
         val id = newId()
-        db.ownerDao().insert(OwnerEntity(id = id, name = nombre, phone = telefono))
-        val owner = Dueno(id = id, nombre = nombre, telefono = telefono)
+        val cleanEmail = email?.trim()?.takeIf { it.isNotBlank() }
+        db.ownerDao().insert(OwnerEntity(id = id, name = nombre, phone = telefono, email = cleanEmail))
+        val owner = Dueno(id = id, nombre = nombre, telefono = telefono, email = cleanEmail)
 
-        val ownerEmail = "owner${owner.id}@vet.cl"
+        val ownerEmail = cleanEmail ?: "owner${owner.id}@vet.cl"
         db.userDao().insert(
             UserEntity(
                 id = newId(),
@@ -199,6 +200,15 @@ object Repository {
         )
         push("AUTH", "Se creó acceso OWNER demo: $ownerEmail / 1234 (ownerId=${owner.id})")
         owner
+    }
+
+    fun updateDueno(id: String, nombre: String, telefono: String, email: String?) = runBlocking {
+        val cleanEmail = email?.trim()?.takeIf { it.isNotBlank() }
+        db.ownerDao().update(OwnerEntity(id = id, name = nombre, phone = telefono, email = cleanEmail))
+    }
+
+    fun deleteDueno(id: String) = runBlocking {
+        db.ownerDao().deleteById(id)
     }
 
     fun addMascota(

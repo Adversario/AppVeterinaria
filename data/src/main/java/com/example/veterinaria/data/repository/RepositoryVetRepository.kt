@@ -15,8 +15,13 @@ class RepositoryVetRepository {
     fun getMascotas(): List<Mascota> = Repository.getMascotas()
     fun getConsultas(): List<Consulta> = Repository.getConsultas()
 
-    fun addDueno(nombre: String, telefono: String): Dueno =
-        Repository.addDueno(nombre, telefono)
+    fun addDueno(nombre: String, telefono: String, email: String? = null): Dueno =
+        Repository.addDueno(nombre, telefono, email)
+
+    fun updateDueno(id: String, nombre: String, telefono: String, email: String?) =
+        Repository.updateDueno(id, nombre, telefono, email)
+
+    fun deleteDueno(id: String) = Repository.deleteDueno(id)
 
     fun addMascota(duenoId: String, nombre: String, especie: String): Mascota =
         Repository.addMascota(

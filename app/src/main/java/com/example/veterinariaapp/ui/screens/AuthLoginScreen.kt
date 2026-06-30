@@ -55,7 +55,7 @@ fun AuthLoginScreen(
 
             OutlinedTextField(
                 value = user,
-                onValueChange = { user = it },
+                onValueChange = { user = it.filter { char -> !char.isWhitespace() } },
                 label = { Text("Correo") },
                 modifier = Modifier.fillMaxWidth(),
                 isError = ui.error != null,

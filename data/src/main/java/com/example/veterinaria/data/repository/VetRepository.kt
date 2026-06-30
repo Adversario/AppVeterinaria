@@ -9,7 +9,9 @@ interface VetRepository {
     fun getMascotas(): List<Mascota>
     fun getConsultas(): List<Consulta>
 
-    fun addDueno(nombre: String, telefono: String): Dueno
+    fun addDueno(nombre: String, telefono: String, email: String? = null): Dueno
+    fun updateDueno(id: String, nombre: String, telefono: String, email: String?)
+    fun deleteDueno(id: String)
     fun addMascota(
         duenoId: String,
         nombre: String,

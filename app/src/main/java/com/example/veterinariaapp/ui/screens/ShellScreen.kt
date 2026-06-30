@@ -75,6 +75,7 @@ fun ShellScreen(
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: tabs.first().route
+    val selectedTabRoute = if (currentRoute == "log") "home" else currentRoute
 
     val currentTitle = remember(currentRoute, tabs) {
         if (currentRoute == "log") "Actividad" else tabs.firstOrNull { it.route == currentRoute }?.label ?: "VeterinariaApp"
@@ -91,6 +92,9 @@ fun ShellScreen(
                             onClick = {
                                 nav.navigate("log") {
                                     launchSingleTop = true
+                                    popUpTo("home") {
+                                        saveState = true
+                                    }
                                 }
                             }
                         ) {
@@ -107,7 +111,7 @@ fun ShellScreen(
             NavigationBar {
                 tabs.forEach { tab ->
                     NavigationBarItem(
-                        selected = currentRoute == tab.route,
+                        selected = selectedTabRoute == tab.route,
                         onClick = {
                             nav.navigate(tab.route) {
                                 launchSingleTop = true

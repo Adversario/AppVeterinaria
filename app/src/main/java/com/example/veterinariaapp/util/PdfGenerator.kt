@@ -107,7 +107,8 @@ object PdfGenerator {
     fun compartirRecetaPdf(
         context: Context,
         consulta: Consulta,
-        nombreMascota: String
+        nombreMascota: String,
+        recipientEmail: String? = null
     ) {
         val pdf = generarRecetaPdf(context, consulta, nombreMascota)
         val uri = FileProvider.getUriForFile(
@@ -120,6 +121,9 @@ object PdfGenerator {
             type = "application/pdf"
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_SUBJECT, "Receta consulta ${consulta.id} - $nombreMascota")
+            recipientEmail?.takeIf { it.isNotBlank() }?.let { email ->
+                putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
+            }
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         val chooser = Intent.createChooser(shareIntent, "Compartir receta PDF")

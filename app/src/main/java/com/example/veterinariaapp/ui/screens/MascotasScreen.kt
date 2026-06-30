@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.veterinaria.data.model.Dueno
+import com.example.veterinaria.data.model.Mascota
 import com.example.veterinariaapp.viewmodel.AuthViewModel
 import com.example.veterinariaapp.viewmodel.VetViewModel
 
@@ -57,6 +59,27 @@ fun MascotasScreen(
     var filtroEspecie by remember { mutableStateOf("Todas") }
     var orden by remember { mutableStateOf("Nombre") }
     var msg by remember { mutableStateOf<String?>(null) }
+    var deleteTarget by remember { mutableStateOf<Mascota?>(null) }
+
+    deleteTarget?.let { pet ->
+        AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            title = { Text("Eliminar registro") },
+            text = { Text("Estas seguro de eliminar a este registro? Esta accion no se puede deshacer.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        vetVm.eliminarMascota(pet.id)
+                        deleteTarget = null
+                        msg = "Mascota eliminada."
+                    }
+                ) { Text("Confirmar") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { deleteTarget = null }) { Text("Cancelar") }
+            }
+        )
+    }
 
     val visibles = remember(mascotas, filtroEspecie, orden, isOwner, ownerId) {
         mascotas
@@ -226,7 +249,7 @@ fun MascotasScreen(
                         Text("Dueno: ${dueno.nombre}")
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedButton(onClick = { vetVm.eliminarMascota(pet.id) }) { Text("Eliminar") }
+                        OutlinedButton(onClick = { deleteTarget = pet }) { Text("Eliminar") }
                     }
                 }
             }

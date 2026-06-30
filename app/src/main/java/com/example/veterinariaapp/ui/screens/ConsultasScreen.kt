@@ -63,6 +63,7 @@ fun ConsultasScreen(
 
     val mascotas by vetVm.mascotas.observeAsState(emptyList())
     val consultas by vetVm.consultas.observeAsState(emptyList())
+    val duenos by vetVm.duenos.observeAsState(emptyList())
 
     val mascotasVisibles = remember(mascotas, isOwner, ownerId) {
         if (!isOwner) mascotas else mascotas.filter { it.duenoId == ownerId }
@@ -307,6 +308,7 @@ fun ConsultasScreen(
 
         items(visibles, key = { it.id }) { consulta ->
             val mascota = mascotas.firstOrNull { it.id == consulta.mascotaId }
+            val dueno = duenos.firstOrNull { it.id == mascota?.duenoId }
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(consulta.motivo, style = MaterialTheme.typography.titleMedium)
@@ -329,7 +331,12 @@ fun ConsultasScreen(
                             onClick = {
                                 val nombreMascota = mascota?.nombre ?: "Mascota ${consulta.mascotaId}"
                                 runCatching {
-                                    PdfGenerator.compartirRecetaPdf(context, consulta, nombreMascota)
+                                    PdfGenerator.compartirRecetaPdf(
+                                        context = context,
+                                        consulta = consulta,
+                                        nombreMascota = nombreMascota,
+                                        recipientEmail = dueno?.email
+                                    )
                                 }.onFailure {
                                     msg = "No se pudo generar el PDF."
                                 }

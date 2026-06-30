@@ -3,7 +3,8 @@ package com.example.veterinaria.data.model
 data class Dueno(
     val id: String,
     val nombre: String,
-    val telefono: String
+    val telefono: String,
+    val email: String? = null
 )
 
 data class Mascota(
