@@ -101,7 +101,12 @@ fun ShellScreen(
                             Icon(Icons.Filled.History, contentDescription = "Ver actividad")
                         }
                     }
-                    IconButton(onClick = onLogout) {
+                    IconButton(
+                        onClick = {
+                            authVm.logout()
+                            onLogout()
+                        }
+                    ) {
                         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Salir")
                     }
                 }

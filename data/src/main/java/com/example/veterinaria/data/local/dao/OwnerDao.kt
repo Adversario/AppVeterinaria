@@ -17,6 +17,9 @@ interface OwnerDao {
     @Query("SELECT * FROM owners ORDER BY id")
     suspend fun getAll(): List<OwnerEntity>
 
+    @Query("SELECT * FROM owners WHERE lower(email) = lower(:email) LIMIT 1")
+    suspend fun findByEmail(email: String): OwnerEntity?
+
     @Query("SELECT COUNT(*) FROM owners")
     suspend fun count(): Int
 

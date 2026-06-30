@@ -49,9 +49,9 @@ fun AppNavGraph(
                 authVm = authVm,
                 vetVm = vetVm,
                 onLogout = {
-                    authVm.logout()
                     navController.navigate(Routes.Login) {
                         popUpTo(Routes.Shell) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )

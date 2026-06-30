@@ -32,6 +32,8 @@ class AuthViewModel : ViewModel() {
                 _session.value = savedSession
                 if (savedSession != null) {
                     _ui.value = AuthUiState(loggedIn = true)
+                } else {
+                    _ui.value = AuthUiState()
                 }
             }
         }
@@ -70,8 +72,10 @@ class AuthViewModel : ViewModel() {
     fun logout() {
         val s = _session.value
         if (s != null) Repository.logAuth("Logout: ${s.email}")
-        Repository.logout()
-        _session.value = null
-        _ui.value = AuthUiState()
+        viewModelScope.launch(Dispatchers.IO) {
+            Repository.logoutAsync()
+            _session.value = null
+            _ui.value = AuthUiState()
+        }
     }
 }

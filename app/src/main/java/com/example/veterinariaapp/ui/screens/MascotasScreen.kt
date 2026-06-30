@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -31,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.veterinaria.data.model.Dueno
 import com.example.veterinaria.data.model.Mascota
@@ -167,7 +169,14 @@ fun MascotasScreen(
                         OutlinedTextField(nombre, { nombre = it }, label = { Text("Nombre de la mascota") }, modifier = Modifier.fillMaxWidth())
                         OutlinedTextField(especie, { especie = it }, label = { Text("Especie") }, modifier = Modifier.fillMaxWidth())
                         OutlinedTextField(raza, { raza = it }, label = { Text("Raza") }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(edadTxt, { edadTxt = it }, label = { Text("Edad") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(
+                            value = edadTxt,
+                            onValueChange = { edadTxt = it.filter { char -> char.isDigit() } },
+                            label = { Text("Edad") },
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true
+                        )
 
                         Button(
                             modifier = Modifier.fillMaxWidth(),
@@ -322,7 +331,8 @@ private fun EditMascotaDialog(
                     onValueChange = { edadTxt = it.filter { char -> char.isDigit() } },
                     label = { Text("Edad") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
         },
