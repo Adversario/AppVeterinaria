@@ -6,11 +6,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.livedata.observeAsState
+import com.example.veterinariaapp.util.PdfGenerator
 import com.example.veterinariaapp.viewmodel.AuthViewModel
 import com.example.veterinariaapp.viewmodel.VetViewModel
 
@@ -23,6 +27,7 @@ fun ConsultasScreen(
     val session by authVm.session.collectAsState()
     val isOwner = session?.rol == "OWNER"
     val ownerId = session?.ownerId
+    val context = LocalContext.current
 
     val mascotas by vetVm.mascotas.observeAsState(emptyList())
     val consultas by vetVm.consultas.observeAsState(emptyList())
@@ -193,6 +198,19 @@ fun ConsultasScreen(
                             motivo = c.motivo
                             fecha = c.fecha
                         }) { Text("Editar") }
+
+                        IconButton(
+                            onClick = {
+                                val nombreMascota = m?.nombre ?: "Mascota ${c.mascotaId}"
+                                runCatching {
+                                    PdfGenerator.compartirRecetaPdf(context, c, nombreMascota)
+                                }.onFailure {
+                                    msg = "No se pudo generar el PDF."
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Filled.Share, contentDescription = "Compartir receta PDF")
+                        }
 
                         OutlinedButton(onClick = { vetVm.eliminarConsulta(c.id) }) { Text("Eliminar") }
                     }

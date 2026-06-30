@@ -57,6 +57,7 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":util"))
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     // BOM de Compose para alinear versiones de UI
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))

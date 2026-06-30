@@ -11,7 +11,7 @@ import com.example.veterinaria.data.Repository
 class ConsultasProvider : ContentProvider() {
 
     companion object {
-        private const val AUTH = "com.example.veterinariaapp.provider"
+        private const val AUTH = "com.example.veterinariaapp.consultasprovider"
         private const val PATH = "consultas"
         private const val ALL = 1
         private const val ONE = 2
