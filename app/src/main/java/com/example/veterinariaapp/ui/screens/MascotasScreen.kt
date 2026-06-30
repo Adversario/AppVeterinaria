@@ -13,12 +13,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -50,7 +55,9 @@ fun MascotasScreen(
     val ownerId = session?.ownerId
 
     val duenos by vetVm.duenos.observeAsState(emptyList())
-    val mascotas by vetVm.mascotas.observeAsState(emptyList())
+    val mascotas by vetVm.filteredMascotas.collectAsState()
+    val allMascotas by vetVm.mascotas.observeAsState(emptyList())
+    val searchQuery by vetVm.searchMascotaQuery.collectAsState()
 
     var selectedDueno by remember { mutableStateOf<Dueno?>(null) }
     var duenoMenuExpanded by remember { mutableStateOf(false) }
@@ -119,8 +126,8 @@ fun MascotasScreen(
             .toList()
     }
 
-    val especiesDisponibles = remember(mascotas) {
-        listOf("Todas") + mascotas.map { it.especie }.distinct().sorted()
+    val especiesDisponibles = remember(allMascotas) {
+        listOf("Todas") + allMascotas.map { it.especie }.distinct().sorted()
     }
 
     LazyColumn(
@@ -206,6 +213,26 @@ fun MascotasScreen(
                     }
                 }
             }
+        }
+
+        item {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { vetVm.searchMascotaQuery.value = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                leadingIcon = {
+                    Icon(Icons.Filled.Search, contentDescription = null)
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { vetVm.searchMascotaQuery.value = "" }) {
+                            Icon(Icons.Filled.Clear, contentDescription = "Limpiar busqueda")
+                        }
+                    }
+                },
+                placeholder = { Text("Buscar mascota...") }
+            )
         }
 
         item {

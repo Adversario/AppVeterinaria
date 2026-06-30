@@ -10,17 +10,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,7 +37,8 @@ import com.example.veterinariaapp.viewmodel.VetViewModel
 
 @Composable
 fun DuenosScreen(vetVm: VetViewModel) {
-    val duenos by vetVm.duenos.observeAsState(emptyList())
+    val duenos by vetVm.filteredDuenos.collectAsState()
+    val searchQuery by vetVm.searchDuenoQuery.collectAsState()
 
     var nombre by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
@@ -124,6 +130,26 @@ fun DuenosScreen(vetVm: VetViewModel) {
                     msg?.let { Text(it) }
                 }
             }
+        }
+
+        item {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { vetVm.searchDuenoQuery.value = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                leadingIcon = {
+                    Icon(Icons.Filled.Search, contentDescription = null)
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { vetVm.searchDuenoQuery.value = "" }) {
+                            Icon(Icons.Filled.Clear, contentDescription = "Limpiar busqueda")
+                        }
+                    }
+                },
+                placeholder = { Text("Buscar dueno por nombre...") }
+            )
         }
 
         items(duenos, key = { it.id }) { dueno ->

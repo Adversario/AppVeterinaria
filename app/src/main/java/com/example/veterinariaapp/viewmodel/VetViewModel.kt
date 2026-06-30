@@ -17,6 +17,7 @@ import com.example.veterinaria.data.model.Mascota
 import com.example.veterinariaapp.platform.ReminderWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
@@ -59,10 +60,47 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
 
     val activityLog: StateFlow<List<ActivityEvent>> = Repository.activityLog
 
+    val searchDuenoQuery = MutableStateFlow("")
+    val searchMascotaQuery = MutableStateFlow("")
+    lateinit var filteredDuenos: StateFlow<List<Dueno>>
+        private set
+    lateinit var filteredMascotas: StateFlow<List<Mascota>>
+        private set
     val proximasCitas: StateFlow<List<Cita>>
 
     init {
         Repository.init(app)
+        filteredDuenos = combine(Repository.duenosFlow, searchDuenoQuery) { duenos, query ->
+            val normalized = query.trim()
+            if (normalized.isBlank()) {
+                duenos
+            } else {
+                duenos.filter { dueno ->
+                    dueno.nombre.contains(normalized, ignoreCase = true) ||
+                        dueno.telefono.contains(normalized, ignoreCase = true)
+                }
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+        filteredMascotas = combine(Repository.mascotasFlow, searchMascotaQuery) { mascotas, query ->
+            val normalized = query.trim()
+            if (normalized.isBlank()) {
+                mascotas
+            } else {
+                mascotas.filter { mascota ->
+                    mascota.nombre.contains(normalized, ignoreCase = true) ||
+                        mascota.especie.contains(normalized, ignoreCase = true) ||
+                        mascota.raza.contains(normalized, ignoreCase = true)
+                }
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
         proximasCitas = Repository.proximasCitasFlow.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
