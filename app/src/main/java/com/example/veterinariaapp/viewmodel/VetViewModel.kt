@@ -148,6 +148,14 @@ class VetViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun editarMascota(id: String, duenoId: String, nombre: String, especie: String, raza: String, edad: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            Repository.updateMascota(id, duenoId, nombre, especie, raza, edad)
+            Repository.logCrud("Editar mascota: $nombre")
+            cargarResumenConProgreso()
+        }
+    }
+
     fun agregarConsulta(
         mascotaId: String,
         motivo: String,

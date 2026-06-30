@@ -1,8 +1,5 @@
 package com.example.veterinariaapp.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -40,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.veterinaria.data.model.Consulta
 import com.example.veterinaria.data.model.Mascota
 import com.example.veterinariaapp.util.PdfGenerator
 import com.example.veterinariaapp.viewmodel.AuthViewModel
@@ -77,7 +76,7 @@ fun ConsultasScreen(
     var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    var editId by remember { mutableStateOf<String?>(null) }
+    var editingConsulta by remember { mutableStateOf<Consulta?>(null) }
     var filtroMascota by remember { mutableStateOf("Todas") }
     var msg by remember { mutableStateOf<String?>(null) }
 
@@ -89,6 +88,24 @@ fun ConsultasScreen(
             .filter { consulta -> petIds.contains(consulta.mascotaId) }
             .filter { consulta -> filtroMascota == "Todas" || consulta.mascotaId == filtroMascota }
             .sortedByDescending { it.fecha }
+    }
+
+    editingConsulta?.let { consulta ->
+        EditConsultaDialog(
+            consulta = consulta,
+            onDismiss = { editingConsulta = null },
+            onConfirm = { newReason, newDate, newDiagnosis, newTreatment ->
+                vetVm.editarConsulta(
+                    consulta.id,
+                    newReason,
+                    newDate,
+                    newDiagnosis,
+                    newTreatment
+                )
+                editingConsulta = null
+                msg = "Consulta actualizada."
+            }
+        )
     }
 
     if (showDatePicker) {
@@ -128,7 +145,7 @@ fun ConsultasScreen(
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        if (editId == null) "Nueva consulta" else "Editar consulta",
+                        "Nueva consulta",
                         style = MaterialTheme.typography.titleMedium
                     )
 
@@ -140,7 +157,6 @@ fun ConsultasScreen(
                             value = selectedMascota?.let { "${it.nombre} - ${it.especie}" } ?: "",
                             onValueChange = {},
                             readOnly = true,
-                            enabled = editId == null,
                             label = { Text("Mascota") },
                             supportingText = {
                                 Text(if (mascotasVisibles.isEmpty()) "Registra una mascota antes de crear consultas." else "Selecciona paciente")
@@ -148,7 +164,7 @@ fun ConsultasScreen(
                             modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
                         ExposedDropdownMenu(
-                            expanded = mascotaMenuExpanded && editId == null,
+                            expanded = mascotaMenuExpanded,
                             onDismissRequest = { mascotaMenuExpanded = false }
                         ) {
                             mascotasVisibles.forEach { mascota ->
@@ -212,51 +228,24 @@ fun ConsultasScreen(
                                 return@Button
                             }
 
-                            if (editId == null) {
-                                vetVm.agregarConsulta(
-                                    mascotaId,
-                                    motivo.trim(),
-                                    selectedDate,
-                                    diagnostico = diagnostico.trim(),
-                                    tratamiento = tratamiento.trim()
-                                )
-                                msg = "Consulta guardada."
-                            } else {
-                                vetVm.editarConsulta(
-                                    editId!!,
-                                    motivo.trim(),
-                                    selectedDate,
-                                    diagnostico.trim(),
-                                    tratamiento.trim()
-                                )
-                                msg = "Consulta actualizada."
-                            }
+                            vetVm.agregarConsulta(
+                                mascotaId,
+                                motivo.trim(),
+                                selectedDate,
+                                diagnostico = diagnostico.trim(),
+                                tratamiento = tratamiento.trim()
+                            )
+                            msg = "Consulta guardada."
 
                             selectedMascota = null
                             motivo = ""
                             diagnostico = ""
                             tratamiento = ""
                             selectedDateMillis = null
-                            editId = null
                         },
                         enabled = mascotasVisibles.isNotEmpty()
                     ) {
-                        Text(if (editId == null) "Guardar consulta" else "Guardar cambios")
-                    }
-
-                    AnimatedVisibility(visible = editId != null, enter = fadeIn(), exit = fadeOut()) {
-                        OutlinedButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                editId = null
-                                selectedMascota = null
-                                motivo = ""
-                                diagnostico = ""
-                                tratamiento = ""
-                                selectedDateMillis = null
-                                msg = "Edicion cancelada."
-                            }
-                        ) { Text("Cancelar") }
+                        Text("Guardar consulta")
                     }
 
                     msg?.let { Text(it) }
@@ -319,12 +308,7 @@ fun ConsultasScreen(
 
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedButton(onClick = {
-                            editId = consulta.id
-                            selectedMascota = mascota
-                            motivo = consulta.motivo
-                            diagnostico = consulta.diagnostico
-                            tratamiento = consulta.tratamiento
-                            selectedDateMillis = parseConsultationDate(consulta.fecha)
+                            editingConsulta = consulta
                         }) { Text("Editar") }
 
                         IconButton(
@@ -351,6 +335,98 @@ fun ConsultasScreen(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditConsultaDialog(
+    consulta: Consulta,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, String, String) -> Unit
+) {
+    var motivo by remember(consulta.id) { mutableStateOf(consulta.motivo) }
+    var diagnostico by remember(consulta.id) { mutableStateOf(consulta.diagnostico) }
+    var tratamiento by remember(consulta.id) { mutableStateOf(consulta.tratamiento) }
+    var selectedDateMillis by remember(consulta.id) { mutableStateOf(parseConsultationDate(consulta.fecha)) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    val selectedDate = selectedDateMillis?.let { formatConsultationDate(it) } ?: consulta.fecha
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDateMillis ?: System.currentTimeMillis()
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        selectedDateMillis = datePickerState.selectedDateMillis
+                        showDatePicker = false
+                    },
+                    enabled = datePickerState.selectedDateMillis != null
+                ) {
+                    Text("Aceptar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar consulta") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = motivo,
+                    onValueChange = { motivo = it },
+                    label = { Text("Motivo") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Button(
+                    onClick = { showDatePicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.Event, contentDescription = null)
+                    Text(selectedDate, modifier = Modifier.padding(start = 8.dp))
+                }
+                OutlinedTextField(
+                    value = diagnostico,
+                    onValueChange = { diagnostico = it },
+                    label = { Text("Diagnostico") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = false,
+                    maxLines = 5
+                )
+                OutlinedTextField(
+                    value = tratamiento,
+                    onValueChange = { tratamiento = it },
+                    label = { Text("Tratamiento") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = false,
+                    maxLines = 5
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (motivo.isNotBlank() && selectedDate.isNotBlank() && diagnostico.isNotBlank() && tratamiento.isNotBlank()) {
+                        onConfirm(motivo.trim(), selectedDate, diagnostico.trim(), tratamiento.trim())
+                    }
+                }
+            ) { Text("Guardar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
 }
 
 private fun formatConsultationDate(dateMillis: Long): String {

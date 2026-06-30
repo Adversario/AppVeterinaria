@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -60,6 +61,7 @@ fun MascotasScreen(
     var orden by remember { mutableStateOf("Nombre") }
     var msg by remember { mutableStateOf<String?>(null) }
     var deleteTarget by remember { mutableStateOf<Mascota?>(null) }
+    var editing by remember { mutableStateOf<Mascota?>(null) }
 
     deleteTarget?.let { pet ->
         AlertDialog(
@@ -77,6 +79,25 @@ fun MascotasScreen(
             },
             dismissButton = {
                 androidx.compose.material3.TextButton(onClick = { deleteTarget = null }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    editing?.let { pet ->
+        EditMascotaDialog(
+            mascota = pet,
+            onDismiss = { editing = null },
+            onConfirm = { newName, newSpecies, newBreed, newAge ->
+                vetVm.editarMascota(
+                    id = pet.id,
+                    duenoId = pet.duenoId,
+                    nombre = newName,
+                    especie = newSpecies,
+                    raza = newBreed,
+                    edad = newAge
+                )
+                editing = null
+                msg = "Mascota actualizada."
             }
         )
     }
@@ -241,18 +262,82 @@ fun MascotasScreen(
         }
 
         items(visibles, key = { it.id }) { pet ->
+            val dueno = duenos.firstOrNull { it.id == pet.duenoId }
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(pet.nombre, style = MaterialTheme.typography.titleMedium)
-                    Text("Especie: ${pet.especie} - Raza: ${pet.raza} - Edad: ${pet.edad}")
-                    duenos.firstOrNull { it.id == pet.duenoId }?.let { dueno ->
-                        Text("Dueno: ${dueno.nombre}")
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(pet.nombre, style = MaterialTheme.typography.titleMedium)
+                            Text("Especie: ${pet.especie} - Raza: ${pet.raza} - Edad: ${pet.edad}")
+                            dueno?.let { Text("Dueno: ${it.nombre}") }
+                        }
+                        ContactActionButtons(phone = dueno?.telefono)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedButton(onClick = { editing = pet }) { Text("Editar") }
                         OutlinedButton(onClick = { deleteTarget = pet }) { Text("Eliminar") }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun EditMascotaDialog(
+    mascota: Mascota,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, String, Int) -> Unit
+) {
+    var nombre by remember(mascota.id) { mutableStateOf(mascota.nombre) }
+    var especie by remember(mascota.id) { mutableStateOf(mascota.especie) }
+    var raza by remember(mascota.id) { mutableStateOf(mascota.raza) }
+    var edadTxt by remember(mascota.id) { mutableStateOf(mascota.edad.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar mascota") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = especie,
+                    onValueChange = { especie = it },
+                    label = { Text("Especie") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = raza,
+                    onValueChange = { raza = it },
+                    label = { Text("Raza") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = edadTxt,
+                    onValueChange = { edadTxt = it.filter { char -> char.isDigit() } },
+                    label = { Text("Edad") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val edad = edadTxt.toIntOrNull()
+                    if (nombre.isNotBlank() && especie.isNotBlank() && raza.isNotBlank() && edad != null) {
+                        onConfirm(nombre.trim(), especie.trim(), raza.trim(), edad)
+                    }
+                }
+            ) { Text("Guardar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
 }

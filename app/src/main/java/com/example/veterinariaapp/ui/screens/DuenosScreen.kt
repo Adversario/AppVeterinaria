@@ -126,9 +126,14 @@ fun DuenosScreen(vetVm: VetViewModel) {
         items(duenos, key = { it.id }) { dueno ->
             ElevatedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(dueno.nombre, style = MaterialTheme.typography.titleMedium)
-                    Text("Tel: ${dueno.telefono}")
-                    dueno.email?.takeIf { it.isNotBlank() }?.let { Text("Correo: $it") }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(dueno.nombre, style = MaterialTheme.typography.titleMedium)
+                            Text("Tel: ${dueno.telefono}")
+                            dueno.email?.takeIf { it.isNotBlank() }?.let { Text("Correo: $it") }
+                        }
+                        ContactActionButtons(phone = dueno.telefono)
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedButton(onClick = { editing = dueno }) { Text("Editar") }
                         OutlinedButton(onClick = { deleteTarget = dueno }) { Text("Eliminar") }

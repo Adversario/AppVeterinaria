@@ -236,6 +236,26 @@ object Repository {
         db.petDao().deleteById(id)
     }
 
+    fun updateMascota(
+        id: String,
+        duenoId: String,
+        nombre: String,
+        especie: String,
+        raza: String,
+        edad: Int
+    ) = runBlocking {
+        db.petDao().update(
+            PetEntity(
+                id = id,
+                ownerId = duenoId,
+                name = nombre,
+                species = especie,
+                breed = raza,
+                age = edad
+            )
+        )
+    }
+
     fun addConsulta(
         mascotaId: String,
         motivo: String,

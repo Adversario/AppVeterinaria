@@ -109,7 +109,7 @@ fun AgendaScreen(vetVm: VetViewModel) {
         val timePickerState = rememberTimePickerState(
             initialHour = selectedHour ?: now.get(Calendar.HOUR_OF_DAY),
             initialMinute = selectedMinute ?: roundedMinute(now.get(Calendar.MINUTE)),
-            is24Hour = true
+            is24Hour = false
         )
 
         TimePickerDialog(
